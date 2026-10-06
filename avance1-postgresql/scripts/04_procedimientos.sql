@@ -1,0 +1,1 @@
+-- 04_procedimientos.sql | Responsable: Santiago Rojas (Srojas-ga)

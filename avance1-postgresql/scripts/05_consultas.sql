@@ -1,0 +1,1 @@
+-- 05_consultas.sql | Responsable: Erika Gomez (Eri-02)

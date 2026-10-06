@@ -1,0 +1,1 @@
+-- 03_triggers.sql | Responsable: Jose Espin (jespinn)
