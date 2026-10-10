@@ -14,7 +14,7 @@ Núcleo transaccional en PostgreSQL. Entrega: jueves 15 de octubre de 2026, 11:5
 `avance1-postgresql/` con `modelo-er/`, `modelo-relacional/`, `scripts/` y `evidencias/`.
 
 ## Cómo ejecutar
-Ejecutar los scripts de `scripts/` en orden, del 01 al 05, sobre una base de datos vacía.
+Ejecutar los scripts de `scripts/` en orden, del 01 al 05, sobre una base de datos vacía. Para repetir la carga se vuelve a correr desde el 01, que borra y recrea las tablas; no se corre solo el 02 con los triggers ya creados.
 
 ## Flujo de trabajo
 Cada integrante trabaja en su rama y entra a `main` con Pull Request.
