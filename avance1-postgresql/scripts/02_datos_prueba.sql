@@ -39,9 +39,41 @@ SET client_encoding = 'UTF8';
 
 
 -- ----- SECCIÓN 3: Actores_Directores (Estefania Paredes) -----
+-- 10 artistas: 5 actores, 3 directores, 2 actor/director. El id 10 está
+-- inactivo y NO debe tener contratos vigentes (lo exige el trigger 6).
+INSERT INTO actores_directores
+    (id_actor_director, nombres, apellidos, nombre_artistico, tipo, nacionalidad, fecha_nacimiento, correo, telefono, fecha_registro, estado)
+VALUES
+    (1,  'Valentina', 'Mora Quintero',   'Vale Mora',     'Actor',          'Colombia',  '1990-04-12', 'valentina.mora@artistas.test',   '3101234501', '2024-02-10', 'Activo'),
+    (2,  'Andrés',    'Cifuentes Rojas', NULL,            'Director',       'Colombia',  '1982-09-30', 'andres.cifuentes@artistas.test', '3101234502', '2024-02-10', 'Activo'),
+    (3,  'Camila',    'Restrepo Vélez',  'Cami Restrepo', 'Actor',          'Colombia',  '1995-01-22', 'camila.restrepo@artistas.test',  '3101234503', '2024-03-05', 'Activo'),
+    (4,  'Mateo',     'Salgado Pardo',   NULL,            'Actor/Director', 'Colombia',  '1987-07-08', 'mateo.salgado@artistas.test',    '3101234504', '2024-03-05', 'Activo'),
+    (5,  'Lucía',     'Ferrer Ibáñez',   'Lucía Ferrer',  'Actor',          'España',    '1984-11-17', 'lucia.ferrer@artistas.test',     '3101234505', '2024-05-20', 'Activo'),
+    (6,  'Diego',     'Alarcón Núñez',   NULL,            'Director',       'México',    '1979-03-02', 'diego.alarcon@artistas.test',    '3101234506', '2024-05-20', 'Activo'),
+    (7,  'Sofía',     'Benítez Arce',    'Sofi Benítez',  'Actor',          'Argentina', '1992-06-25', 'sofia.benitez@artistas.test',    '3101234507', '2024-08-14', 'Activo'),
+    (8,  'Julián',    'Pineda Cortés',   NULL,            'Director',       'Colombia',  '1975-12-09', 'julian.pineda@artistas.test',    NULL,         '2024-08-14', 'Activo'),
+    (9,  'Isabela',   'Duarte Lemos',    'Isa Duarte',    'Actor/Director', 'Colombia',  '1988-05-14', 'isabela.duarte@artistas.test',   '3101234509', '2025-01-18', 'Activo'),
+    (10, 'Ricardo',   'Montoya Gil',     NULL,            'Actor',          'Colombia',  '1965-10-03', 'ricardo.montoya@artistas.test',  NULL,         '2024-02-10', 'Inactivo');
+
 
 
 -- ----- SECCIÓN 4: Staff (Estefania Paredes) -----
+-- 8 empleados. Para las demás secciones:
+--   ids 1 y 2 (Administrador, Coordinador): firman los contratos.
+--   ids 3 y 4 (Taquilleros) y 7 (Servicio al cliente): atienden ventas de Taquilla.
+--   id 8 está de vacaciones: no usarlo en ventas nuevas.
+INSERT INTO staff
+    (id_staff, tipo_documento, documento, nombres, apellidos, cargo, correo, telefono, fecha_ingreso, estado)
+VALUES
+    (1, 'CC', '1010101001', 'Laura',     'Gómez Prieto',  'Administrador',       'laura.gomez@cinema.test',      '3201112201', '2023-06-01', 'Activo'),
+    (2, 'CC', '1010101002', 'Camilo',    'Herrera Soto',  'Coordinador',         'camilo.herrera@cinema.test',   '3201112202', '2023-07-15', 'Activo'),
+    (3, 'CC', '1010101003', 'Natalia',   'Ortiz Beltrán', 'Taquillero',          'natalia.ortiz@cinema.test',    '3201112203', '2024-01-10', 'Activo'),
+    (4, 'CC', '1010101004', 'Sebastián', 'Vargas Luna',   'Taquillero',          'sebastian.vargas@cinema.test', '3201112204', '2024-01-10', 'Activo'),
+    (5, 'CC', '1010101005', 'Paola',     'Mendoza Ríos',  'Proyeccionista',      'paola.mendoza@cinema.test',    '3201112205', '2024-02-20', 'Activo'),
+    (6, 'CE', '5500123',    'Jorge',     'Salinas Duque', 'Acomodador',          'jorge.salinas@cinema.test',    NULL,         '2024-04-01', 'Activo'),
+    (7, 'CC', '1010101007', 'Daniela',   'Cruz Martínez', 'Servicio al cliente', 'daniela.cruz@cinema.test',     '3201112207', '2024-09-02', 'Activo'),
+    (8, 'CC', '1010101008', 'Felipe',    'Arango Mejía',  'Taquillero',          'felipe.arango@cinema.test',    '3201112208', '2025-03-03', 'Vacaciones');
+
 
 
 -- ----- SECCIÓN 5: Funciones (Erika Gomez) -----
