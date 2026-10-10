@@ -36,6 +36,13 @@ SET client_encoding = 'UTF8';
 
 
 -- ----- SECCIÓN 2: Tipos_Boleta (Santiago Rojas) -----
+INSERT INTO tipos_boleta (id_tipo_boleta, nombre, descripcion, precio, activo) VALUES
+(1, 'General',       'Entrada estándar para adultos',               18000, TRUE),
+(2, 'Estudiante',    'Con carné estudiantil vigente',               14000, TRUE),
+(3, 'Niño',          'Menores de 12 años',                          12000, TRUE),
+(4, 'Adulto mayor',  'Mayores de 60 años',                          12000, TRUE),
+(5, 'VIP',           'Silla preferencial, para la Sala VIP',        30000, TRUE),
+(6, 'Promo 2x1',     'Promoción retirada, ya no se vende',          18000, FALSE);
 
 
 -- ----- SECCIÓN 3: Actores_Directores (Estefania Paredes) -----
