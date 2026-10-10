@@ -1,4 +1,4 @@
--- =====================================================================
+-- ---------------------------------------------------------------------
 -- 01_creacion_tablas.sql
 -- Avance 1 - Nucleo transaccional (PostgreSQL) - Empresa de cine
 -- Responsable: Estefania Paredes Castañeda (tef333)
@@ -7,7 +7,7 @@
 -- restricciones de integridad (UNIQUE, NOT NULL, CHECK, DEFAULT) e indices.
 -- Se puede ejecutar varias veces: elimina las tablas y las vuelve a crear.
 -- Orden de ejecucion del proyecto: 01 -> 02 -> 03 -> 04 -> 05
--- =====================================================================
+-- ---------------------------------------------------------------------
 
 SET client_encoding = 'UTF8';
 
