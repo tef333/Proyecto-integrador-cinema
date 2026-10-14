@@ -53,8 +53,10 @@ INSERT INTO tipos_boleta (id_tipo_boleta, nombre, descripcion, precio, activo) V
 
 
 -- ----- SECCIÓN 3: Actores_Directores (Estefania Paredes) -----
--- 10 artistas: 5 actores, 3 directores, 2 actor/director. El id 10 está
--- inactivo y NO debe tener contratos vigentes (lo exige el trigger 6).
+-- 30 artistas (el documento de identidad de Altamira Cine registra 30):
+-- 14 actores, 9 directores y 7 actor/director, de Colombia y otros países
+-- de Iberoamérica. Los ids 10 y 28 están inactivos y NO deben tener
+-- contratos vigentes (lo exige el trigger 6).
 INSERT INTO actores_directores
     (id_actor_director, nombres, apellidos, nombre_artistico, tipo, nacionalidad, fecha_nacimiento, correo, telefono, fecha_registro, estado)
 VALUES
@@ -67,7 +69,27 @@ VALUES
     (7,  'Sofía',     'Benítez Arce',    'Sofi Benítez',  'Actor',          'Argentina', '1992-06-25', 'sofia.benitez@artistas.test',    '3101234507', '2024-08-14', 'Activo'),
     (8,  'Julián',    'Pineda Cortés',   NULL,            'Director',       'Colombia',  '1975-12-09', 'julian.pineda@artistas.test',    NULL,         '2024-08-14', 'Activo'),
     (9,  'Isabela',   'Duarte Lemos',    'Isa Duarte',    'Actor/Director', 'Colombia',  '1988-05-14', 'isabela.duarte@artistas.test',   '3101234509', '2025-01-18', 'Activo'),
-    (10, 'Ricardo',   'Montoya Gil',     NULL,            'Actor',          'Colombia',  '1965-10-03', 'ricardo.montoya@artistas.test',  NULL,         '2024-02-10', 'Inactivo');
+    (10, 'Ricardo',   'Montoya Gil',     NULL,            'Actor',          'Colombia',  '1965-10-03', 'ricardo.montoya@artistas.test',  NULL,         '2024-02-10', 'Inactivo'),
+    (11, 'Natalia',   'Quiroga Salas',   'Nati Quiroga',  'Actor',          'Colombia',  '1991-02-14', 'natalia.quiroga@artistas.test',  '3101234511', '2024-09-03', 'Activo'),
+    (12, 'Santiago',  'Luna Aristizábal', NULL,           'Director',       'Colombia',  '1980-06-21', 'santiago.luna@artistas.test',    '3101234512', '2024-09-03', 'Activo'),
+    (13, 'Gabriela',  'Navarro Ponce',   'Gaby Navarro',  'Actor',          'México',    '1993-10-11', 'gabriela.navarro@artistas.test', '3101234513', '2024-09-17', 'Activo'),
+    (14, 'Emilio',    'Rojas Cáceres',   NULL,            'Actor/Director', 'Chile',     '1983-04-05', 'emilio.rojas@artistas.test',     '3101234514', '2024-09-17', 'Activo'),
+    (15, 'Paula',     'Zambrano Ruiz',   'Pau Zambrano',  'Actor',          'Colombia',  '1997-08-29', 'paula.zambrano@artistas.test',   '3101234515', '2024-10-08', 'Activo'),
+    (16, 'Tomás',     'Echeverri Mesa',  NULL,            'Director',       'Colombia',  '1977-01-16', 'tomas.echeverri@artistas.test',  NULL,         '2024-10-08', 'Activo'),
+    (17, 'Carolina',  'Bustos Herrera',  'Caro Bustos',   'Actor',          'Perú',      '1989-12-03', 'carolina.bustos@artistas.test',  '3101234517', '2024-11-12', 'Activo'),
+    (18, 'Rodrigo',   'Paz Villalba',    NULL,            'Director',       'Uruguay',   '1972-05-27', 'rodrigo.paz@artistas.test',      '3101234518', '2024-11-12', 'Activo'),
+    (19, 'Mariana',   'Giraldo Toro',    'Mari Giraldo',  'Actor/Director', 'Colombia',  '1990-09-09', 'mariana.giraldo@artistas.test',  '3101234519', '2024-11-25', 'Activo'),
+    (20, 'Álvaro',    'Medina Ortega',   NULL,            'Actor',          'España',    '1981-03-18', 'alvaro.medina@artistas.test',    '3101234520', '2024-11-25', 'Activo'),
+    (21, 'Juliana',   'Arboleda Franco', 'Juli Arboleda', 'Actor',          'Colombia',  '1998-07-01', 'juliana.arboleda@artistas.test', '3101234521', '2025-02-04', 'Activo'),
+    (22, 'Fernando',  'Vidal Montes',    NULL,            'Director',       'Argentina', '1974-11-23', 'fernando.vidal@artistas.test',   '3101234522', '2025-02-04', 'Activo'),
+    (23, 'Daniela',   'Cárdenas Uribe',  'Dani Cárdenas', 'Actor/Director', 'Colombia',  '1986-02-02', 'daniela.cardenas@artistas.test', '3101234523', '2025-02-19', 'Activo'),
+    (24, 'Leonardo',  'Suárez Prada',    NULL,            'Actor',          'Venezuela', '1985-06-30', 'leonardo.suarez@artistas.test',  '3101234524', '2025-02-19', 'Activo'),
+    (25, 'Adriana',   'Peña Camacho',    'Adri Peña',     'Actor',          'Colombia',  '1994-04-17', 'adriana.pena@artistas.test',     '3101234525', '2025-03-11', 'Activo'),
+    (26, 'Hernán',    'Cordero Bravo',   NULL,            'Director',       'Ecuador',   '1969-08-12', 'hernan.cordero@artistas.test',   NULL,         '2025-03-11', 'Activo'),
+    (27, 'Manuela',   'Ospina Londoño',  'Manu Ospina',   'Actor/Director', 'Colombia',  '1992-01-07', 'manuela.ospina@artistas.test',   '3101234527', '2025-04-01', 'Activo'),
+    (28, 'Esteban',   'Montaña Roa',     NULL,            'Actor',          'Colombia',  '1968-09-26', 'esteban.montana@artistas.test',  NULL,         '2024-09-03', 'Inactivo'),
+    (29, 'Valeria',   'Camargo Neira',   'Vale Camargo',  'Actor/Director', 'Brasil',    '1987-10-15', 'valeria.camargo@artistas.test',  '3101234529', '2025-04-01', 'Activo'),
+    (30, 'Nicolás',   'Prieto Sandoval', NULL,            'Director',       'Colombia',  '1978-12-31', 'nicolas.prieto@artistas.test',   '3101234530', '2025-05-13', 'Activo');
 
 
 
