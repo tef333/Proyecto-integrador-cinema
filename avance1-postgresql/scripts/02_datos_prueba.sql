@@ -150,7 +150,6 @@ INSERT INTO funciones (id_funcion, id_sala, titulo_pelicula, genero, clasificaci
 
 
 -- ----- SECCIÓN 6: Contratos (Estefania Paredes) -----
--- Necesita actores_directores, staff y funciones (secciones 3, 4 y 5).
 
 -- 12 contratos de funciones especiales (estrenos, conversatorios y presentaciones).
 -- Las fechas se calculan a partir de la fecha de la función, así la vigencia
