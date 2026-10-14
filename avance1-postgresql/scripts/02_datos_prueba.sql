@@ -34,6 +34,13 @@ SET client_encoding = 'UTF8';
 
 -- ----- SECCIÓN 1: Salas (Jose Espin) -----
 
+INSERT INTO salas (id_sala, nombre, capacidad, tipo_sala, estado) VALUES
+(1, 'Sala 1',    150, '2D',   'Activa'),
+(2, 'Sala 2',    150, '2D',   'Activa'),
+(3, 'Sala 3',    120, '3D',   'Activa'),
+(4, 'Sala VIP',   60, 'VIP',  'Activa'),
+(5, 'Sala IMAX', 220, 'IMAX', 'Activa'),
+(6, 'Sala 4DX',   80, '4DX',  'Mantenimiento');
 
 -- ----- SECCIÓN 2: Tipos_Boleta (Santiago Rojas) -----
 INSERT INTO tipos_boleta (id_tipo_boleta, nombre, descripcion, precio, activo) VALUES
