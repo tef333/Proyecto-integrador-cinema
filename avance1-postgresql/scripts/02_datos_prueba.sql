@@ -52,15 +52,46 @@ INSERT INTO tipos_boleta (id_tipo_boleta, nombre, descripcion, precio, activo) V
 
 
 -- ----- SECCIÓN 5: Funciones (Erika Gomez) -----
--- Necesita las salas (sección 1). Incluir funciones pasadas (Finalizada),
--- una Cancelada y varias Programadas a futuro.
+INSERT INTO funciones (id_funcion, id_sala, titulo_pelicula, genero, clasificacion, idioma, duracion_min, fecha_hora_inicio, estado) VALUES
+-- Finalizadas (pasadas)
+(1, 1, 'Oppenheimer', 'Drama', '+15', 'Inglés subtitulado', 180, DATE_TRUNC('day', NOW()) - INTERVAL '28 days' + INTERVAL '18 hours', 'Finalizada'),
+(2, 2, 'Coco', 'Animación', 'Todo publico', 'Español', 105, DATE_TRUNC('day', NOW()) - INTERVAL '27 days' + INTERVAL '15 hours', 'Finalizada'),
+(3, 3, 'Parásitos', 'Thriller', '+15', 'Coreano subtitulado', 132, DATE_TRUNC('day', NOW()) - INTERVAL '25 days' + INTERVAL '19 hours', 'Finalizada'),
+(4, 5, 'Dune: Parte Dos', 'Ciencia ficción', '+12', 'Inglés subtitulado', 166, DATE_TRUNC('day', NOW()) - INTERVAL '24 days' + INTERVAL '20 hours', 'Finalizada'),
+(5, 4, 'La La Land', 'Musical', '+7', 'Inglés subtitulado', 128, DATE_TRUNC('day', NOW()) - INTERVAL '22 days' + INTERVAL '19 hours 30 minutes', 'Finalizada'),
+(6, 1, 'Encanto', 'Animación', 'Todo publico', 'Español', 102, DATE_TRUNC('day', NOW()) - INTERVAL '21 days' + INTERVAL '14 hours', 'Finalizada'),
+(7, 2, 'El Irlandés', 'Drama', '+15', 'Inglés subtitulado', 209, DATE_TRUNC('day', NOW()) - INTERVAL '20 days' + INTERVAL '18 hours', 'Finalizada'),
+(8, 5, 'Joker', 'Thriller', '+18', 'Inglés subtitulado', 122, DATE_TRUNC('day', NOW()) - INTERVAL '18 days' + INTERVAL '21 hours', 'Finalizada'),
+(9, 3, 'Intensamente 2', 'Animación', 'Todo publico', 'Español', 96, DATE_TRUNC('day', NOW()) - INTERVAL '16 days' + INTERVAL '16 hours', 'Finalizada'),
+(10, 1, 'Barbie', 'Comedia', '+12', 'Español', 114, DATE_TRUNC('day', NOW()) - INTERVAL '14 days' + INTERVAL '17 hours', 'Finalizada'),
+(11, 4, 'Cinema Paradiso', 'Drama', '+7', 'Italiano subtitulado', 155, DATE_TRUNC('day', NOW()) - INTERVAL '12 days' + INTERVAL '18 hours', 'Finalizada'),
+(12, 2, 'Mad Max: Furia en el camino', 'Acción', '+15', 'Español', 120, DATE_TRUNC('day', NOW()) - INTERVAL '10 days' + INTERVAL '20 hours', 'Finalizada'),
+(13, 5, 'Avatar: El camino del agua', 'Ciencia ficción', '+12', 'Español', 192, DATE_TRUNC('day', NOW()) - INTERVAL '9 days' + INTERVAL '19 hours', 'Finalizada'),
+(14, 3, 'El Origen', 'Ciencia ficción', '+12', 'Español', 148, DATE_TRUNC('day', NOW()) - INTERVAL '7 days' + INTERVAL '20 hours 30 minutes', 'Finalizada'),
+(15, 1, 'Spider-Man: Un nuevo universo', 'Animación', '+7', 'Español', 117, DATE_TRUNC('day', NOW()) - INTERVAL '5 days' + INTERVAL '16 hours', 'Finalizada'),
+(16, 4, 'Amélie', 'Comedia romántica', '+12', 'Francés subtitulado', 122, DATE_TRUNC('day', NOW()) - INTERVAL '4 days' + INTERVAL '20 hours', 'Finalizada'),
+-- Canceladas
+(17, 2, 'Pulp Fiction', 'Crimen', '+18', 'Inglés subtitulado', 154, DATE_TRUNC('day', NOW()) - INTERVAL '3 days' + INTERVAL '21 hours', 'Cancelada'),
+(18, 5, 'Gladiador', 'Acción', '+15', 'Español', 155, DATE_TRUNC('day', NOW()) + INTERVAL '6 days 20 hours', 'Cancelada'),
+-- Programadas (futuras)
+(19, 1, 'Deadpool y Wolverine', 'Acción', '+15', 'Español', 128, DATE_TRUNC('day', NOW()) + INTERVAL '1 day 19 hours', 'Programada'),
+(20, 2, 'Moana 2', 'Animación', 'Todo publico', 'Español', 100, DATE_TRUNC('day', NOW()) + INTERVAL '1 day 15 hours', 'Programada'),
+(21, 3, 'Top Gun: Maverick', 'Acción', '+12', 'Español', 130, DATE_TRUNC('day', NOW()) + INTERVAL '2 days 18 hours', 'Programada'),
+(22, 4, 'Casablanca', 'Romance', '+7', 'Inglés subtitulado', 102, DATE_TRUNC('day', NOW()) + INTERVAL '2 days 20 hours', 'Programada'),
+(23, 5, 'Interestelar', 'Ciencia ficción', '+12', 'Español', 169, DATE_TRUNC('day', NOW()) + INTERVAL '3 days 19 hours 30 minutes', 'Programada'),
+(24, 1, 'El Padrino', 'Crimen', '+15', 'Español', 175, DATE_TRUNC('day', NOW()) + INTERVAL '4 days 18 hours 30 minutes', 'Programada'),
+(25, 2, 'Coco', 'Animación', 'Todo publico', 'Español', 105, DATE_TRUNC('day', NOW()) + INTERVAL '5 days 14 hours', 'Programada'),
+(26, 3, 'Pobres criaturas', 'Comedia dramática', '+18', 'Inglés subtitulado', 141, DATE_TRUNC('day', NOW()) + INTERVAL '7 days 20 hours', 'Programada'),
+(27, 5, 'Barbie', 'Comedia', '+12', 'Español', 114, DATE_TRUNC('day', NOW()) + INTERVAL '8 days 17 hours', 'Programada'),
+(28, 1, 'Encanto', 'Animación', 'Todo publico', 'Español', 102, DATE_TRUNC('day', NOW()) + INTERVAL '9 days 15 hours', 'Programada'),
+(29, 4, 'Parásitos', 'Thriller', '+15', 'Coreano subtitulado', 132, DATE_TRUNC('day', NOW()) + INTERVAL '10 days 19 hours 30 minutes', 'Programada'),
+(30, 2, 'Mad Max: Furia en el camino', 'Acción', '+15', 'Español', 120, DATE_TRUNC('day', NOW()) + INTERVAL '12 days 20 hours', 'Programada');
 
 
 -- ----- SECCIÓN 6: Contratos (Estefania Paredes) -----
 -- Necesita actores_directores, staff y funciones (secciones 3, 4 y 5).
 
 
--- ----- SECCIÓN 7: Espectadores (Erika Gomez) -----
 -- ----- SECCIÓN 7: Espectadores (Erika Gomez) -----
 INSERT INTO espectadores (id_espectador, tipo_documento, documento, nombres, apellidos, correo, telefono, fecha_nacimiento, fecha_registro, puntos_acumulados) VALUES
 (1,  'CC',  '1020345671', 'Laura',          'Gómez Ríos',        'laura.gomez@correo.com',        '3101234501', '1992-04-15', '2025-11-03', 120),
