@@ -164,18 +164,18 @@ SELECT v.id_contrato, v.id_actor_director, v.id_funcion, v.id_staff, v.objeto, v
        f.fecha_hora_inicio::DATE + v.dias_despues,
        v.valor, v.estado
 FROM (VALUES
-    (1,   2,  1, 1, 'Conversatorio con el director después de la proyección',  'Conversatorio', 15, 3, 900000, 'Finalizado'),
-    (2,   6,  3, 2, 'Conversatorio sobre cine de autor con el director',       'Conversatorio', 15, 3, 1900000, 'Finalizado'),
-    (3,   7,  5, 1, 'Presentación en vivo antes de la función musical',        'Presentacion',  10, 2, 700000, 'Finalizado'),
-    (4,  10,  7, 2, 'Evento especial con actor invitado',                      'Evento',        10, 2, 600000, 'Finalizado'),
-    (5,  22, 11, 1, 'Conversatorio sobre cine clásico con el director',        'Conversatorio', 15, 3, 1000000, 'Finalizado'),
-    (6,   4, 17, 1, 'Estreno con presencia del elenco (función cancelada)',    'Estreno',       10, 2, 900000, 'Cancelado'),
-    (7,  20, 18, 2, 'Conversatorio con actor invitado (función cancelada)',    'Conversatorio', 10, 2, 600000, 'Cancelado'),
-    (8,   1, 19, 1, 'Estreno con presencia del elenco',                        'Estreno',        7, 3, 1000000, 'Vigente'),
-    (9,   3, 19, 1, 'Estreno con presencia del elenco',                        'Estreno',        7, 3, 800000, 'Vigente'),
-    (10,  8, 22, 2, 'Conversatorio con el director después de la proyección',  'Conversatorio',  7, 3, 700000, 'Vigente'),
-    (11, 29, 26, 2, 'Estreno con la actriz y directora invitada',              'Estreno',       10, 3, 1100000, 'Vigente'),
-    (12, 19, 29, 1, 'Conversatorio con la directora después de la proyección', 'Conversatorio', 10, 3, 800000, 'Vigente')
+    (1,   2,  1, 1, 'Conversatorio con el director después de la proyección',  'Conversatorio', 15, 3, 450000, 'Finalizado'),
+    (2,   6,  3, 2, 'Conversatorio sobre cine de autor con el director',       'Conversatorio', 15, 3, 500000, 'Finalizado'),
+    (3,   7,  5, 1, 'Presentación en vivo antes de la función musical',        'Presentacion',  10, 2, 400000, 'Finalizado'),
+    (4,  10,  7, 2, 'Evento especial con actor invitado',                      'Evento',        10, 2, 800000, 'Finalizado'),
+    (5,  22, 11, 1, 'Conversatorio sobre cine clásico con el director',        'Conversatorio', 15, 3, 200000, 'Finalizado'),
+    (6,   4, 17, 1, 'Estreno con presencia del elenco (función cancelada)',    'Estreno',       10, 2, 500000, 'Cancelado'),
+    (7,  20, 18, 2, 'Conversatorio con actor invitado (función cancelada)',    'Conversatorio', 10, 2, 400000, 'Cancelado'),
+    (8,   1, 19, 1, 'Estreno con presencia del elenco',                        'Estreno',        7, 3, 350000, 'Vigente'),
+    (9,   3, 19, 1, 'Estreno con presencia del elenco',                        'Estreno',        7, 3, 300000, 'Vigente'),
+    (10,  8, 22, 2, 'Conversatorio con el director después de la proyección',  'Conversatorio',  7, 3, 250000, 'Vigente'),
+    (11, 29, 26, 2, 'Estreno con la actriz y directora invitada',              'Estreno',       10, 3, 150000, 'Vigente'),
+    (12, 19, 29, 1, 'Conversatorio con la directora después de la proyección', 'Conversatorio', 10, 3, 150000, 'Vigente')
 ) AS v(id_contrato, id_actor_director, id_funcion, id_staff, objeto, tipo_contrato, dias_antes, dias_despues, valor, estado)
 JOIN funciones f ON f.id_funcion = v.id_funcion;
 
