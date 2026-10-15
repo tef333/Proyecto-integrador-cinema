@@ -22,11 +22,12 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     v_estado    funciones.estado%TYPE;
+    v_inicio    funciones.fecha_hora_inicio%TYPE;
     v_ventas    INTEGER;
     v_reembolso NUMERIC(14,2);
     v_contratos INTEGER;
 BEGIN
-    SELECT estado INTO v_estado
+    SELECT estado, fecha_hora_inicio INTO v_estado, v_inicio
     FROM funciones
     WHERE id_funcion = p_id_funcion
     FOR UPDATE;
@@ -38,6 +39,11 @@ BEGIN
     IF v_estado <> 'Programada' THEN
         RAISE EXCEPTION 'Solo se cancelan funciones programadas; la función % está %',
             p_id_funcion, v_estado;
+    END IF;
+
+    IF v_inicio <= NOW() THEN
+        RAISE EXCEPTION 'La función % ya empezó (%); no se puede cancelar',
+            p_id_funcion, v_inicio;
     END IF;
 
     SELECT COUNT(*), COALESCE(SUM(cantidad * precio_unitario), 0)
