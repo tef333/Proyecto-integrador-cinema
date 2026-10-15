@@ -1,7 +1,7 @@
 -- 03_triggers.sql
 -- Avance 1, núcleo transaccional del cine
 --
--- 7 triggers sobre 6 de las 8 tablas:
+-- 8 triggers sobre 6 de las 8 tablas:
 --   1. funciones           trg_funciones_validar_programacion
 --   2. ventas              trg_ventas_validar_cupo
 --   3. ventas              trg_ventas_validar_edad
@@ -9,6 +9,7 @@
 --   5. contratos           trg_contratos_validar
 --   6. actores_directores  trg_actores_validar_inactivacion
 --   7. espectadores        trg_espectadores_normalizar
+--   8. ventas              trg_ventas_acumular_puntos
 --
 -- Cada trigger cubre una regla que un CHECK no puede validar, porque
 -- necesita consultar otras filas u otras tablas, o corregir el dato
@@ -286,13 +287,14 @@ FOR EACH ROW
 EXECUTE FUNCTION fn_salas_validar_cambios();
 
 
--- 5. CONTRATOS: artista activo, función vigente y fechas coherentes
+-- 5. CONTRATOS: gestor autorizado, artista activo, función vigente y fechas coherentes
 -- Tabla: contratos, antes de insertar o modificar.
--- Regla: un contrato vigente solo se firma con un artista activo, para
--- una función que no esté cancelada y cuya fecha caiga dentro de la
--- vigencia del contrato.
--- Por qué trigger: el estado del artista y la fecha y estado de la
--- función están en otras tablas.
+-- Regla: un contrato vigente solo lo gestiona un Administrador o un
+-- Coordinador activo del staff, se firma con un artista activo, para una
+-- función que no esté cancelada y cuya fecha caiga dentro de la vigencia
+-- del contrato.
+-- Por qué trigger: el cargo del gestor, el estado del artista y la fecha
+-- y estado de la función están en otras tablas.
 
 CREATE OR REPLACE FUNCTION fn_contratos_validar()
 RETURNS TRIGGER
@@ -302,10 +304,30 @@ DECLARE
     v_estado_artista actores_directores.estado%TYPE;
     v_estado_funcion funciones.estado%TYPE;
     v_fecha_funcion  DATE;
+    v_cargo          staff.cargo%TYPE;
+    v_estado_staff   staff.estado%TYPE;
 BEGIN
     -- Los contratos finalizados o cancelados son históricos, no se revisan.
     IF NEW.estado <> 'Vigente' THEN
         RETURN NEW;
+    END IF;
+
+    SELECT cargo, estado INTO v_cargo, v_estado_staff
+    FROM staff
+    WHERE id_staff = NEW.id_staff;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'El miembro del staff % no existe', NEW.id_staff;
+    END IF;
+
+    IF v_cargo NOT IN ('Administrador', 'Coordinador') THEN
+        RAISE EXCEPTION 'El contrato lo debe gestionar un Administrador o Coordinador; el staff % es %',
+            NEW.id_staff, v_cargo;
+    END IF;
+
+    IF v_estado_staff <> 'Activo' THEN
+        RAISE EXCEPTION 'El miembro del staff % no puede gestionar contratos: está %',
+            NEW.id_staff, v_estado_staff;
     END IF;
 
     SELECT estado INTO v_estado_artista
@@ -417,6 +439,60 @@ FOR EACH ROW
 EXECUTE FUNCTION fn_espectadores_normalizar();
 
 
+-- 8. VENTAS: puntos de fidelización
+-- Tabla: ventas, después de insertar, modificar o borrar.
+-- Regla: cada venta pagada suma al espectador 1 punto por cada $1.000 del
+-- valor de la venta (cantidad × precio_unitario). Si la venta se anula,
+-- se borra o cambia de cantidad o precio, se ajusta la diferencia; si
+-- cambia de espectador, los puntos pasan de uno al otro.
+-- Los puntos que traen los espectadores en el 02 se toman como saldo de
+-- apertura. Por eso al restar se usa GREATEST(..., 0): el saldo nunca
+-- queda negativo aunque se anule una venta cargada antes de este trigger.
+-- Por qué trigger: el saldo está en espectadores y debe moverse solo, sin
+-- depender de que cada procedimiento o consulta se acuerde de hacerlo.
+
+CREATE OR REPLACE FUNCTION fn_ventas_acumular_puntos()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_pesos_por_punto CONSTANT INTEGER := 1000;
+    v_puntos_old      INTEGER := 0;
+    v_puntos_new      INTEGER := 0;
+BEGIN
+    -- Puntos que daba la venta antes del cambio (solo si estaba pagada)
+    IF TG_OP IN ('UPDATE', 'DELETE') AND OLD.estado = 'Pagada' THEN
+        v_puntos_old := FLOOR(OLD.cantidad * OLD.precio_unitario / v_pesos_por_punto);
+    END IF;
+
+    -- Puntos que da la venta después del cambio (solo si queda pagada)
+    IF TG_OP IN ('INSERT', 'UPDATE') AND NEW.estado = 'Pagada' THEN
+        v_puntos_new := FLOOR(NEW.cantidad * NEW.precio_unitario / v_pesos_por_punto);
+    END IF;
+
+    IF v_puntos_old > 0 THEN
+        UPDATE espectadores
+        SET puntos_acumulados = GREATEST(puntos_acumulados - v_puntos_old, 0)
+        WHERE id_espectador = OLD.id_espectador;
+    END IF;
+
+    IF v_puntos_new > 0 THEN
+        UPDATE espectadores
+        SET puntos_acumulados = puntos_acumulados + v_puntos_new
+        WHERE id_espectador = NEW.id_espectador;
+    END IF;
+
+    RETURN NULL;   -- trigger AFTER: el valor de retorno no se usa
+END;
+$$;
+
+CREATE OR REPLACE TRIGGER trg_ventas_acumular_puntos
+AFTER INSERT OR UPDATE OF estado, cantidad, precio_unitario, id_espectador OR DELETE
+ON ventas
+FOR EACH ROW
+EXECUTE FUNCTION fn_ventas_acumular_puntos();
+
+
 -- VERIFICACIÓN
 -- Prueba cada trigger con un caso que debe bloquear y otro que debe
 -- pasar. Crea sus propios datos, anota el resultado de cada intento y al
@@ -436,6 +512,10 @@ DECLARE
     v_adulto        INTEGER;
     v_menor         INTEGER;
     v_staff         INTEGER;
+    v_taquillero    INTEGER;
+    v_venta         INTEGER;
+    v_puntos_antes  INTEGER;
+    v_puntos_despues INTEGER;
     v_actor1        INTEGER;
     v_actor2        INTEGER;
     v_f1            INTEGER;   -- mañana de 6 a 8 p. m., +15, sala A
@@ -483,6 +563,9 @@ BEGIN
     INSERT INTO staff (documento, nombres, apellidos, cargo, correo)
     VALUES ('PRUEBA003', 'Staff', 'Prueba', 'Coordinador', 'staff@prueba.test')
     RETURNING id_staff INTO v_staff;
+    INSERT INTO staff (documento, nombres, apellidos, cargo, correo)
+    VALUES ('PRUEBA004', 'Taquillero', 'Prueba', 'Taquillero', 'taquilla@prueba.test')
+    RETURNING id_staff INTO v_taquillero;
 
     INSERT INTO actores_directores (nombres, apellidos, tipo, nacionalidad, fecha_nacimiento, correo)
     VALUES ('Artista', 'Uno', 'Actor', 'Colombia', '1985-03-01', 'artista1@prueba.test')
@@ -654,6 +737,16 @@ BEGIN
     trigger_probado := '5 contratos'; caso := 'Contrato para una función cancelada';
     esperado := 'BLOQUEADO'; resultado := v_res; RETURN NEXT;
 
+    BEGIN
+        INSERT INTO contratos (id_actor_director, id_funcion, id_staff, objeto, tipo_contrato, fecha_inicio, fecha_fin, valor)
+        VALUES (v_actor1, v_f_todos, v_taquillero, 'Presentación', 'Presentacion',
+                CURRENT_DATE, CURRENT_DATE + 7, 1000000);
+        v_res := 'PERMITIDO';
+    EXCEPTION WHEN OTHERS THEN v_res := 'BLOQUEADO: ' || SQLERRM;
+    END;
+    trigger_probado := '5 contratos'; caso := 'Contrato gestionado por un taquillero';
+    esperado := 'BLOQUEADO'; resultado := v_res; RETURN NEXT;
+
     -- 6. actores_directores
     BEGIN
         UPDATE actores_directores SET estado = 'Inactivo' WHERE id_actor_director = v_actor1;
@@ -701,6 +794,26 @@ BEGIN
     END;
     trigger_probado := '7 espectadores'; caso := 'Mismo correo y documento escritos distinto';
     esperado := 'BLOQUEADO'; resultado := v_res; RETURN NEXT;
+
+    -- 8. ventas: puntos
+    SELECT puntos_acumulados INTO v_puntos_antes FROM espectadores WHERE id_espectador = v_adulto;
+    INSERT INTO ventas (id_espectador, id_funcion, id_tipo_boleta, cantidad, canal_venta, metodo_pago)
+    VALUES (v_adulto, v_f_todos, v_tipo, 2, 'Online', 'Tarjeta')
+    RETURNING id_venta INTO v_venta;
+    SELECT puntos_acumulados INTO v_puntos_despues FROM espectadores WHERE id_espectador = v_adulto;
+    trigger_probado := '8 puntos'; caso := 'Venta pagada de $20.000 suma 20 puntos';
+    esperado := 'PERMITIDO';
+    resultado := CASE WHEN v_puntos_despues - v_puntos_antes = 20 THEN 'PERMITIDO: ' ELSE 'ERROR: ' END
+                 || v_puntos_antes || ' -> ' || v_puntos_despues || ' puntos';
+    RETURN NEXT;
+
+    UPDATE ventas SET estado = 'Anulada' WHERE id_venta = v_venta;
+    SELECT puntos_acumulados INTO v_puntos_despues FROM espectadores WHERE id_espectador = v_adulto;
+    trigger_probado := '8 puntos'; caso := 'Anular la venta devuelve el saldo anterior';
+    esperado := 'PERMITIDO';
+    resultado := CASE WHEN v_puntos_despues = v_puntos_antes THEN 'PERMITIDO: ' ELSE 'ERROR: ' END
+                 || 'saldo final ' || v_puntos_despues || ' puntos';
+    RETURN NEXT;
 
     -- Deshace todos los datos de prueba
     RAISE EXCEPTION 'fin_pruebas';
