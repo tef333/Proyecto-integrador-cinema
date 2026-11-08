@@ -20,23 +20,24 @@ SET client_encoding = 'UTF8';
 -- esa película u horario, usar una sala más pequeña o lanzar promociones.
 -- Solo se analizan funciones Finalizada: las futuras todavía están
 -- vendiendo y saldrían con ocupación baja sin que sea un problema real.
--- Técnicas: JOIN (funciones-salas), LEFT JOIN (ventas, para incluir
+-- Técnicas: JOIN (funciones-peliculas-salas), LEFT JOIN (ventas, para incluir
 -- funciones sin ventas), SUM + GROUP BY, CTE y subconsulta escalar (AVG).
 -- ---------------------------------------------------------------------
 WITH ocupacion AS (
     SELECT f.id_funcion,
-           f.titulo_pelicula,
+           p.titulo                                   AS titulo_pelicula,
            f.fecha_hora_inicio,
            s.nombre                                   AS sala,
            s.capacidad,
            COALESCE(SUM(v.cantidad), 0)               AS boletas_vendidas,
            ROUND(100.0 * COALESCE(SUM(v.cantidad), 0) / s.capacidad, 1) AS ocupacion_pct
     FROM funciones f
+    JOIN peliculas p   ON p.id_pelicula = f.id_pelicula
     JOIN salas s       ON s.id_sala = f.id_sala
     LEFT JOIN ventas v ON v.id_funcion = f.id_funcion
                       AND v.estado = 'Pagada'
     WHERE f.estado = 'Finalizada'
-    GROUP BY f.id_funcion, f.titulo_pelicula, f.fecha_hora_inicio, s.nombre, s.capacidad
+    GROUP BY f.id_funcion, p.titulo, f.fecha_hora_inicio, s.nombre, s.capacidad
 )
 SELECT id_funcion,
        titulo_pelicula,
@@ -92,7 +93,7 @@ ORDER BY total_gastado DESC;
 -- taquilla sigue vendiendo; por eso se muestra el estado de la función.
 -- ---------------------------------------------------------------------
 SELECT f.id_funcion,
-       f.titulo_pelicula,
+       p.titulo                                     AS titulo_pelicula,
        f.fecha_hora_inicio::DATE                    AS fecha_funcion,
        f.estado                                     AS estado_funcion,
        c.artistas_contratados,
@@ -100,6 +101,7 @@ SELECT f.id_funcion,
        COALESCE(t.ingresos, 0)                      AS ingresos_taquilla,
        COALESCE(t.ingresos, 0) - c.costo_contratos  AS balance
 FROM funciones f
+JOIN peliculas p ON p.id_pelicula = f.id_pelicula
 JOIN (
     SELECT id_funcion,
            COUNT(*)  AS artistas_contratados,

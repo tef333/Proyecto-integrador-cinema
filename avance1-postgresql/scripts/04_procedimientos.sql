@@ -111,17 +111,18 @@ BEGIN
     FOR r IN
         WITH por_funcion AS (
             SELECT f.id_funcion,
-                   f.titulo_pelicula,
+                   p.titulo AS titulo_pelicula,
                    s.capacidad,
                    COALESCE(SUM(v.cantidad), 0)                     AS boletas,
                    COALESCE(SUM(v.cantidad * v.precio_unitario), 0) AS ingresos
             FROM funciones f
+            JOIN peliculas p ON p.id_pelicula = f.id_pelicula
             JOIN salas s ON s.id_sala = f.id_sala
             LEFT JOIN ventas v ON v.id_funcion = f.id_funcion
                               AND v.estado <> 'Anulada'
             WHERE f.estado <> 'Cancelada'
               AND f.fecha_hora_inicio::DATE BETWEEN p_desde AND p_hasta
-            GROUP BY f.id_funcion, f.titulo_pelicula, s.capacidad
+            GROUP BY f.id_funcion, p.titulo, s.capacidad
         )
         SELECT titulo_pelicula,
                COUNT(*)                                          AS funciones,
@@ -168,10 +169,12 @@ DECLARE
     v_en_curso    INTEGER;
     v_contratos   INTEGER;
 BEGIN
-    UPDATE funciones
+    UPDATE funciones f
     SET estado = 'Finalizada'
-    WHERE estado IN ('Programada', 'En curso')
-      AND fecha_hora_inicio + duracion_min * INTERVAL '1 minute' <= NOW();
+    FROM peliculas p
+    WHERE p.id_pelicula = f.id_pelicula
+      AND f.estado IN ('Programada', 'En curso')
+      AND f.fecha_hora_inicio + p.duracion_min * INTERVAL '1 minute' <= NOW();
     GET DIAGNOSTICS v_finalizadas = ROW_COUNT;
 
     UPDATE funciones
