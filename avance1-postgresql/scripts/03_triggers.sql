@@ -1,7 +1,7 @@
 -- 03_triggers.sql
 -- Avance 1, núcleo transaccional del cine
 --
--- 8 triggers sobre 6 de las 8 tablas:
+-- 8 triggers sobre 6 de las 9 tablas:
 --   1. funciones           trg_funciones_validar_programacion
 --   2. ventas              trg_ventas_validar_cupo
 --   3. ventas              trg_ventas_validar_edad
@@ -36,6 +36,7 @@ DECLARE
     v_estado_sala salas.estado%TYPE;
     v_choque      funciones.id_funcion%TYPE;
     v_fin_nueva   TIMESTAMP;
+    v_duracion    peliculas.duracion_min%TYPE;
 BEGIN
     -- Solo se valida lo que va a ocupar la sala.
     IF NEW.estado <> 'Programada' THEN
@@ -58,16 +59,26 @@ BEGIN
             NEW.id_sala, v_estado_sala;
     END IF;
 
+    -- La duración viene del catálogo de películas.
+    SELECT duracion_min INTO v_duracion
+    FROM peliculas
+    WHERE id_pelicula = NEW.id_pelicula;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'La película % no existe', NEW.id_pelicula;
+    END IF;
+
     -- Dos funciones se cruzan si cada una empieza antes de que la otra termine.
-    v_fin_nueva := NEW.fecha_hora_inicio + NEW.duracion_min * INTERVAL '1 minute';
+    v_fin_nueva := NEW.fecha_hora_inicio + v_duracion * INTERVAL '1 minute';
 
     SELECT f.id_funcion INTO v_choque
     FROM funciones f
+    JOIN peliculas p ON p.id_pelicula = f.id_pelicula
     WHERE f.id_sala = NEW.id_sala
       AND f.id_funcion <> NEW.id_funcion
       AND f.estado <> 'Cancelada'
       AND f.fecha_hora_inicio < v_fin_nueva
-      AND NEW.fecha_hora_inicio < f.fecha_hora_inicio + f.duracion_min * INTERVAL '1 minute'
+      AND NEW.fecha_hora_inicio < f.fecha_hora_inicio + p.duracion_min * INTERVAL '1 minute'
     LIMIT 1;
 
     IF FOUND THEN
@@ -80,7 +91,7 @@ END;
 $$;
 
 CREATE OR REPLACE TRIGGER trg_funciones_validar_programacion
-BEFORE INSERT OR UPDATE OF id_sala, fecha_hora_inicio, duracion_min, estado
+BEFORE INSERT OR UPDATE OF id_sala, id_pelicula, fecha_hora_inicio, estado
 ON funciones
 FOR EACH ROW
 EXECUTE FUNCTION fn_funciones_validar_programacion();
@@ -182,23 +193,24 @@ EXECUTE FUNCTION fn_ventas_validar_cupo();
 -- Regla: el espectador que compra debe tener, el día de la función, la
 -- edad mínima que exige la clasificación de la película.
 -- Por qué trigger: la fecha de nacimiento está en espectadores y la
--- clasificación en funciones; un CHECK sobre ventas no puede leerlas.
+-- clasificación en peliculas; un CHECK sobre ventas no puede leerlas.
 
 CREATE OR REPLACE FUNCTION fn_ventas_validar_edad()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    v_clasificacion funciones.clasificacion%TYPE;
+    v_clasificacion peliculas.clasificacion%TYPE;
     v_fecha_funcion funciones.fecha_hora_inicio%TYPE;
     v_nacimiento    espectadores.fecha_nacimiento%TYPE;
     v_edad_minima   INTEGER;
     v_edad          INTEGER;
 BEGIN
-    SELECT clasificacion, fecha_hora_inicio
+    SELECT p.clasificacion, f.fecha_hora_inicio
     INTO v_clasificacion, v_fecha_funcion
-    FROM funciones
-    WHERE id_funcion = NEW.id_funcion;
+    FROM funciones f
+    JOIN peliculas p ON p.id_pelicula = f.id_pelicula
+    WHERE f.id_funcion = NEW.id_funcion;
 
     SELECT fecha_nacimiento INTO v_nacimiento
     FROM espectadores
@@ -522,6 +534,8 @@ DECLARE
     v_f_todos       INTEGER;   -- mañana 8:30 p. m., todo público, sala A
     v_f_pasada      INTEGER;   -- empezó ayer
     v_f_cancelada   INTEGER;
+    v_p_15          INTEGER;   -- película de prueba +15, 120 min
+    v_p_todos       INTEGER;   -- película de prueba todo público, 90 min
     v_manana        TIMESTAMP := DATE_TRUNC('day', NOW()) + INTERVAL '1 day';
     v_res           TEXT;
     v_txt           TEXT;
@@ -574,22 +588,29 @@ BEGIN
     VALUES ('Artista', 'Dos', 'Director', 'Colombia', '1979-08-20', 'artista2@prueba.test')
     RETURNING id_actor_director INTO v_actor2;
 
-    INSERT INTO funciones (id_sala, titulo_pelicula, genero, clasificacion, duracion_min, fecha_hora_inicio)
-    VALUES (v_sala_a, 'Película prueba', 'Drama', '+15', 120, v_manana + INTERVAL '18 hours')
+    INSERT INTO peliculas (titulo, genero, clasificacion, duracion_min)
+    VALUES ('Película prueba +15', 'Drama', '+15', 120)
+    RETURNING id_pelicula INTO v_p_15;
+    INSERT INTO peliculas (titulo, genero, clasificacion, duracion_min)
+    VALUES ('Película prueba todo público', 'Animación', 'Todo publico', 90)
+    RETURNING id_pelicula INTO v_p_todos;
+
+    INSERT INTO funciones (id_sala, id_pelicula, fecha_hora_inicio)
+    VALUES (v_sala_a, v_p_15, v_manana + INTERVAL '18 hours')
     RETURNING id_funcion INTO v_f1;
 
-    INSERT INTO funciones (id_sala, titulo_pelicula, genero, clasificacion, duracion_min, fecha_hora_inicio)
-    VALUES (v_sala_b, 'Película pasada', 'Drama', 'Todo publico', 90, v_manana - INTERVAL '30 hours')
+    INSERT INTO funciones (id_sala, id_pelicula, fecha_hora_inicio)
+    VALUES (v_sala_b, v_p_todos, v_manana - INTERVAL '30 hours')
     RETURNING id_funcion INTO v_f_pasada;
 
-    INSERT INTO funciones (id_sala, titulo_pelicula, genero, clasificacion, duracion_min, fecha_hora_inicio, estado)
-    VALUES (v_sala_b, 'Película cancelada', 'Drama', 'Todo publico', 90, v_manana + INTERVAL '15 hours', 'Cancelada')
+    INSERT INTO funciones (id_sala, id_pelicula, fecha_hora_inicio, estado)
+    VALUES (v_sala_b, v_p_todos, v_manana + INTERVAL '15 hours', 'Cancelada')
     RETURNING id_funcion INTO v_f_cancelada;
 
     -- 1. funciones
     BEGIN
-        INSERT INTO funciones (id_sala, titulo_pelicula, genero, clasificacion, duracion_min, fecha_hora_inicio)
-        VALUES (v_sala_a, 'Cruce', 'Drama', 'Todo publico', 90, v_manana + INTERVAL '19 hours');
+        INSERT INTO funciones (id_sala, id_pelicula, fecha_hora_inicio)
+        VALUES (v_sala_a, v_p_todos, v_manana + INTERVAL '19 hours');
         v_res := 'PERMITIDO';
     EXCEPTION WHEN OTHERS THEN v_res := 'BLOQUEADO: ' || SQLERRM;
     END;
@@ -597,8 +618,8 @@ BEGIN
     esperado := 'BLOQUEADO'; resultado := v_res; RETURN NEXT;
 
     BEGIN
-        INSERT INTO funciones (id_sala, titulo_pelicula, genero, clasificacion, duracion_min, fecha_hora_inicio)
-        VALUES (v_sala_a, 'Infantil', 'Animación', 'Todo publico', 90, v_manana + INTERVAL '20 hours 30 minutes')
+        INSERT INTO funciones (id_sala, id_pelicula, fecha_hora_inicio)
+        VALUES (v_sala_a, v_p_todos, v_manana + INTERVAL '20 hours 30 minutes')
         RETURNING id_funcion INTO v_f_todos;
         v_res := 'PERMITIDO';
     EXCEPTION WHEN OTHERS THEN v_res := 'BLOQUEADO: ' || SQLERRM;
@@ -607,8 +628,8 @@ BEGIN
     esperado := 'PERMITIDO'; resultado := v_res; RETURN NEXT;
 
     BEGIN
-        INSERT INTO funciones (id_sala, titulo_pelicula, genero, clasificacion, duracion_min, fecha_hora_inicio)
-        VALUES (v_sala_mant, 'Sin sala', 'Drama', 'Todo publico', 90, v_manana + INTERVAL '15 hours');
+        INSERT INTO funciones (id_sala, id_pelicula, fecha_hora_inicio)
+        VALUES (v_sala_mant, v_p_todos, v_manana + INTERVAL '15 hours');
         v_res := 'PERMITIDO';
     EXCEPTION WHEN OTHERS THEN v_res := 'BLOQUEADO: ' || SQLERRM;
     END;
