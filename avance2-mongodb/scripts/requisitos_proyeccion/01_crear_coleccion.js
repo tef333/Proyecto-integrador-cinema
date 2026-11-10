@@ -199,6 +199,16 @@ db.getCollectionInfos({ name: "requisitos_proyeccion" });
 
 db.fichas_tecnicas_peliculas.drop();
 
+// ----- BLOQUE: fichas_tecnicas_peliculas (Santiago Rojas) -----
+// Avance 2 - MongoDB - Coleccion fichas_tecnicas_peliculas
+// Responsable: Santiago Rojas
+//
+// Una ficha tecnica por funcion (30), enlazada con PostgreSQL por id_funcion e
+// id_pelicula (no hay llave foranea entre motores: la integridad es eventual).
+// Embebido: ficha (director, reparto, paises, generos), versiones, version
+// exhibida y premios. Referenciado: solo los ids de PostgreSQL.
+// Campos opcionales: premios y observaciones (no todas las peliculas los tienen).
+
 db.createCollection("fichas_tecnicas_peliculas", {
   validator: {
     $jsonSchema: {
