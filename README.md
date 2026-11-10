@@ -5,7 +5,7 @@ Empresa de cine en Bogotá, Colombia. El proyecto combina un núcleo transaccion
 ## Integrantes
 | # | Integrante | Usuario GitHub | Avance 1 | Avance 2 |
 |---|---|---|---|---|
-| 1 | Estefania Paredes | tef333 | Modelo ER, modelo relacional y creación de tablas | Diagrama de arquitectura políglota y sección CAP |
+| 1 | Estefania Paredes | tef333 | Modelo ER, modelo relacional y creación de tablas | Colección `reportes_incidentes`, diagrama de arquitectura políglota y sección CAP |
 | 2 | Jose Espin | jespinn | Triggers | Colección `requisitos_proyeccion` y sección ACID |
 | 3 | Santiago Rojas | Srojas-ga | Procedimientos almacenados | Colección `fichas_tecnicas_peliculas` y sección BASE |
 | 4 | Erika Gomez | Eri-02 | Consultas SQL e informe PDF | Colección `resenas_peliculas`, integración e informe |
