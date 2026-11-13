@@ -1,119 +1,96 @@
-# Altamira Cine — Proyecto Integrador (Cinemas 3)
+# Proyecto integrador – Altamira Cine
 
-Sistema de información para **Altamira Cine**, un complejo de cine en Bogotá, Colombia. Combina cartelera comercial de estrenos con cine colombiano y latinoamericano, y organiza funciones especiales con artistas invitados (estrenos con elenco, conversatorios con directores y presentaciones en vivo).
+Altamira Cine es una empresa de cine de Bogotá, Colombia, con cartelera comercial de estrenos combinada con cine colombiano y latinoamericano. Opera en un solo complejo de 6 salas (780 sillas, 700 en operación mientras la sala 4DX está en mantenimiento) y tiene 30 actores y directores registrados.
 
-El nombre viene de la cueva de Altamira (España), donde están algunas de las primeras imágenes pintadas por seres humanos: contar historias con imágenes es mucho más antiguo que el cine.
+El proyecto combina un núcleo transaccional en PostgreSQL (Avance 1) con una capa documental en MongoDB (Avance 2). Los dos motores se conectan mediante identificadores compartidos, sin llaves foráneas entre ellos.
 
-Proyecto integrador de **Bases de Datos 2** — Universidad El Bosque, 2026-2. Grupo **Cinemas 3** (4 integrantes).
+## Integrantes
 
----
-
-## Arquitectura políglota
-
-El sistema usa dos motores, cada uno para lo que mejor hace:
-
-| Motor | Rol | Qué almacena |
-| --- | --- | --- |
-| **PostgreSQL** | Núcleo transaccional (ACID) | Películas, funciones, salas, boletas, tarifas, clientes, puntos de fidelización, artistas y contratos |
-| **MongoDB** | Capa documental (BASE) | Fichas técnicas, requisitos de proyección, reseñas e incidentes |
-
-Ambos motores se conectan mediante **identificadores compartidos** (`id_pelicula`, `id_funcion`), que existen como llaves en PostgreSQL y como campos de referencia en las colecciones de MongoDB.
-
-El **diagrama de arquitectura políglota fue realizado por Estefania Paredes** y se encuentra en `avance2-mongodb/diagrama-arquitectura-poliglota/`.
-
----
-
-## Avances del proyecto
-
-### Avance 1 — Núcleo relacional (PostgreSQL)
-
-Carpeta `avance1-postgresql/`: modelo entidad-relación, modelo relacional (9 tablas, incluida `peliculas` con FK desde `funciones`), scripts de creación, datos de prueba, triggers y procedimientos.
-
-### Avance 2 — Capa documental (MongoDB) y fundamentos teóricos
-
-Carpeta `avance2-mongodb/`. Incluye:
-
-- Diseño de las 4 colecciones con justificación de embebido vs referenciado.
-- Scripts de creación (con `$jsonSchema`), datos de prueba (mínimo 30 documentos por colección) y consultas (con `aggregation pipeline`).
-- Diagrama de arquitectura políglota.
-- Evidencias de ejecución real (capturas con comando y resultado).
-- Justificación teórica ACID / BASE / CAP aplicada al dominio del cine.
-
-| Colección | Contenido | Identificador compartido |
-| --- | --- | --- |
-| `fichas_tecnicas_peliculas` | Elenco, duración por versión, idiomas, subtítulos, clasificación por país | `id_pelicula` |
-| `requisitos_proyeccion` | Requerimientos técnicos por función especial (IMAX, 3D, Dolby Atmos, subtitulado) | `id_funcion` |
-| `resenas_peliculas` | Texto libre, calificación, fecha, respuesta de la empresa | `id_pelicula` |
-| `reportes_incidentes` | Fallas técnicas, quejas de servicio, incidentes de seguridad | `id_funcion` / sala |
-
-> Al ser un grupo de 4 integrantes, no aplican los elementos adicionales del grupo de 5.
-
----
+| # | Integrante | Usuario GitHub | Avance 1 | Avance 2 |
+|---|---|---|---|---|
+| 1 | Estefania Paredes | tef333 | Modelo ER, modelo relacional y creación de tablas | Colección `reportes_incidentes`, diagrama de arquitectura políglota y sección CAP |
+| 2 | Jose Espin | jespinn | Triggers | Colección `requisitos_proyeccion` y sección ACID |
+| 3 | Santiago Rojas | Srojas-ga | Procedimientos almacenados | Colección `fichas_tecnicas_peliculas` y sección BASE |
+| 4 | Erika Gomez | Eri-02 | Consultas SQL e informe PDF | Colección `resenas_peliculas`, integración e informe del Avance 2 |
 
 ## Estructura del repositorio
 
 ```
-Proyecto-integrador-cinema/
-├── README.md
-├── avance1-postgresql/
-│   └── scripts/                      (creación, datos, triggers, procedimientos)
-└── avance2-mongodb/
-    ├── diagrama-arquitectura-poliglota/   (imagen o PDF)
-    ├── scripts/
-    │   ├── 01_creacion_colecciones.js
-    │   ├── 02_datos_prueba.js
-    │   ├── 03_consultas.js
-    │   └── reportes_incidentes/
-    └── evidencias/                        (capturas de ejecución real)
+avance1-postgresql/
+├── avance1-informe.pdf
+├── modelo-er/                  Modelo Entidad Cinema.drawio.pdf
+├── modelo-relacional/          modelo relacional corregido feedback.pdf
+├── scripts/                    01_creacion_tablas.sql … 05_consultas.sql
+└── evidencias/                 capturas de ejecución
+avance2-mongodb/
+├── diagrama-arquitectura-poliglota/   diagrama-arquitectura-poliglota.pdf
+├── scripts/
+│   ├── fichas_tecnicas_peliculas/     01_crear_fichas.js, 02_datos_fichas.js, 03_consulta_fichas.js
+│   ├── requisitos_proyeccion/         01_crear_coleccion.js, 02_insertar_documentos.js, 03_consulta_find.js
+│   ├── reportes_incidentes/           01_crear_coleccion.js, 02_insertar_documentos.js, 03_consultas.js
+│   └── resenas_peliculas/             01_crear_coleccion.js, 02_insertar_documentos.js, 03_consultas.js
+└── evidencias/                        capturas de ejecución
 ```
 
----
+## Avance 1 – PostgreSQL
 
-## Reglas de negocio principales
+Núcleo transaccional. Entrega: jueves 15 de octubre de 2026, 11:59 AM.
 
-- **Tarifas diferenciadas:** general, estudiante, niño, adulto mayor y VIP. El precio queda guardado en cada venta, así un cambio de tarifa no altera las ventas anteriores.
-- **Fidelización:** cada espectador tiene un saldo de puntos asociado a su registro.
-- **Control de edad:** cada película tiene clasificación (todo público, +7, +12, +15, +18) verificada al vender la boleta.
-- **Contratos con artistas:** ligados a una función específica, gestionados por un administrador o coordinador, con vigencia definida.
-- **Control de aforo:** nunca se venden más boletas que la capacidad de la sala, ni para funciones iniciadas o canceladas.
-- **Pagos:** en efectivo solo en taquilla; la venta en línea no requiere intervención de un empleado.
+El modelo tiene 9 tablas: las 8 entidades del enunciado (`actores_directores`, `contratos`, `salas`, `funciones`, `tipos_boleta`, `ventas`, `espectadores`, `staff`) más `peliculas`. La tabla `peliculas` guarda el título, género, clasificación y duración una sola vez, para que `funciones` no repita esos datos; además es la fuente del identificador `id_pelicula` que se comparte con MongoDB.
 
-### Salas
+Contenido de `scripts/`:
 
-| Sala | Formato | Sillas |
-| --- | --- | --- |
-| Sala 1 | 2D | 150 |
-| Sala 2 | 2D | 150 |
-| Sala 3 | 3D | 120 |
-| Sala VIP | Preferencial | 60 |
-| Sala IMAX | IMAX | 220 |
-| Sala 4DX | 4DX (en mantenimiento) | 80 |
+| Script | Contenido |
+|---|---|
+| `01_creacion_tablas.sql` | 9 tablas con llaves primarias y foráneas, restricciones de integridad e índices |
+| `02_datos_prueba.sql` | Datos de prueba: 37 películas, 30 funciones, 30 espectadores, 30 actores/directores, entre otros |
+| `03_triggers.sql` | 8 triggers sobre 6 tablas, más la función `pruebas_triggers()` |
+| `04_procedimientos.sql` | `sp_cancelar_funcion`, `sp_reporte_ventas` y `sp_mantenimiento_diario` |
+| `05_consultas.sql` | 3 consultas con JOIN, agregaciones y subconsultas |
 
-Capacidad total: 780 sillas; 700 en operación mientras la Sala 4DX siga en mantenimiento.
+Cómo ejecutar: correr los scripts de `scripts/` en orden, del 01 al 05, sobre una base de datos vacía. Para repetir la carga se vuelve a correr desde el 01, que borra y recrea las tablas; no se corre solo el 02 con los triggers ya creados.
 
----
+## Avance 2 – MongoDB
 
-## Integrantes y responsabilidades
+Capa documental y fundamentos teóricos (ACID, BASE, CAP).
 
-| Integrante | Responsabilidades |
-| --- | --- |
-| **Estefania Paredes (tef333)** | Script 01 y datos de catálogo (02) en PostgreSQL; modelos ER y relacional (9 tablas); **diagrama de arquitectura políglota**; sección CAP; colección `reportes_incidentes` |
-| **Jose (jespinn)** | Script 03 (triggers con JOIN a `peliculas`, `pruebas_triggers()`); sección ACID; colección `requisitos_proyeccion` |
-| **Santiago Rojas (Srojas-ga)** | Script 04 e INSERT de funciones con `id_pelicula`; colección `fichas_tecnicas_peliculas`; sección BASE |
-| **Erika Gómez (Eri-02)** | Script 05; colección `resenas_peliculas`; integración, portada y formato del informe PDF; actualización del informe del Avance 1 |
+| Colección | Identificadores compartidos con PostgreSQL | Validación `$jsonSchema` | Documentos |
+|---|---|---|---|
+| `fichas_tecnicas_peliculas` | `id_pelicula` | Sí | 37 |
+| `requisitos_proyeccion` | `id_funcion`, `id_pelicula`, `id_sala` | Sí | 30 |
+| `reportes_incidentes` | `id_funcion`, `id_pelicula`, `id_sala`, `id_staff`, `id_espectador` | Sí | 30 |
+| `resenas_peliculas` | `id_pelicula`, `id_funcion`, `id_espectador`, `id_staff` (en `respuesta_empresa`) | Sí | 32 |
 
----
+Las 4 colecciones tienen validación `$jsonSchema` y todos los identificadores de los datos de prueba existen en las tablas de PostgreSQL.
 
-## Cómo ejecutar
+### Diagrama de arquitectura políglota
 
-**PostgreSQL:** ejecutar en orden los scripts de `avance1-postgresql/scripts/`.
+El diagrama de `diagrama-arquitectura-poliglota/` fue realizado por **Estefania Paredes**. Muestra las 9 tablas de PostgreSQL, las 4 colecciones de MongoDB y los identificadores que las unen. No hay llaves foráneas entre motores: la coherencia entre ambos la mantiene la aplicación.
 
-**MongoDB** (mongosh, Compass o Atlas):
+### Consultas MongoDB
 
-```bash
-mongosh "<cadena-de-conexión>" avance2-mongodb/scripts/01_creacion_colecciones.js
-mongosh "<cadena-de-conexión>" avance2-mongodb/scripts/02_datos_prueba.js
-mongosh "<cadena-de-conexión>" avance2-mongodb/scripts/03_consultas.js
-```
+| Colección | Consulta | Tipo |
+|---|---|---|
+| `fichas_tecnicas_peliculas` | Películas con más idiomas y versiones | Aggregation pipeline (`$unwind`, `$group`) |
+| `requisitos_proyeccion` | Funciones en sala IMAX o 3D con su requisito técnico | `find` |
+| `reportes_incidentes` | Incidentes graves sin cerrar | `find` |
+| `reportes_incidentes` | Impacto de las fallas técnicas por sala | Aggregation pipeline |
+| `reportes_incidentes` | Fallas técnicas por formato de sala, cruzadas con `requisitos_proyeccion` | Aggregation pipeline (`$lookup`) |
+| `resenas_peliculas` | Calificación promedio por película con datos de su ficha técnica | Aggregation pipeline (`$group`, `$lookup`) |
 
-Los scripts de `reportes_incidentes/` se ejecutan igual desde su subcarpeta.
+En total son 6 consultas, 4 de ellas con aggregation pipeline.
+
+### Cómo ejecutar
+
+Abrir mongosh o la consola de Compass, seleccionar la base `cinema_avance2` y correr, dentro de la carpeta de cada colección, sus tres scripts en orden (creación, datos de prueba y consultas). El script de creación borra y recrea la colección, por lo que se puede repetir la carga.
+
+Dependencias entre colecciones:
+
+- La consulta con `$lookup` de `reportes_incidentes` necesita que `requisitos_proyeccion` ya esté cargada.
+- La consulta con `$lookup` de `resenas_peliculas` necesita que `fichas_tecnicas_peliculas` ya esté cargada.
+
+Al final de cada script `03` hay una inserción inválida que se rechaza con `Document failed validation`; es la evidencia de que el `$jsonSchema` funciona.
+
+## Flujo de trabajo
+
+Cada integrante trabaja en su rama y entra a `main` con Pull Request.
