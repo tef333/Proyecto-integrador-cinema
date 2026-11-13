@@ -97,10 +97,10 @@ Capacidad total: 780 sillas; 700 en operación mientras la Sala 4DX siga en mant
 
 | Integrante | Responsabilidades |
 | --- | --- |
-| **Estefania Paredes** | Script 01 y datos de catálogo (02) en PostgreSQL; modelos ER y relacional (9 tablas); **diagrama de arquitectura políglota**; sección CAP; colección `reportes_incidentes` |
+| **Estefania Paredes (tef333)** | Script 01 y datos de catálogo (02) en PostgreSQL; modelos ER y relacional (9 tablas); **diagrama de arquitectura políglota**; sección CAP; colección `reportes_incidentes` |
 | **Jose (jespinn)** | Script 03 (triggers con JOIN a `peliculas`, `pruebas_triggers()`); sección ACID; colección `requisitos_proyeccion` |
-| **Santiago Rojas** | Script 04 e INSERT de funciones con `id_pelicula`; colección `fichas_tecnicas_peliculas`; sección BASE |
-| **Erika Gómez** | Script 05; colección `resenas_peliculas`; integración, portada y formato del informe PDF; actualización del informe del Avance 1 |
+| **Santiago Rojas (Srojas-ga)** | Script 04 e INSERT de funciones con `id_pelicula`; colección `fichas_tecnicas_peliculas`; sección BASE |
+| **Erika Gómez (Eri-02)** | Script 05; colección `resenas_peliculas`; integración, portada y formato del informe PDF; actualización del informe del Avance 1 |
 
 ---
 
