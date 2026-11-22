@@ -27,6 +27,9 @@ uvicorn app.main:app --reload --port 8000
 | `POST /incidentes` | Incidente (MongoDB, código `INC-nnn`). Valida empleado, sala, función y espectador en PostgreSQL | 404 referencia inexistente, 422 forma / sala que no es la de la función / error 121, 503 |
 | `GET /salas/{id}/incidentes` | Incidentes de una sala (filtros `severidad_minima`, `estado`) | 404 sala |
 | `GET /funciones/finalizadas` · `/salas` · `/staff` | Catálogos de apoyo | |
+| `GET /casos/1/funcion-con-resenas` | Caso 1: función (PG) + resumen y reseñas (Mongo). Parámetro `id_funcion` | 404; si Mongo cae responde 200 con `mongo_disponible:false` |
+| `GET /casos/2/pelicula-con-requisitos` | Caso 2: película y sus funciones (PG) + requisitos técnicos por función (Mongo). Parámetro `id_pelicula` | 404; igual que el caso 1 |
+| `GET /peliculas` | Catálogo de películas | |
 
 Formato de error: `{"error": codigo, "mensaje": texto, "request_id": id, ...}`.
 
