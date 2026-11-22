@@ -49,7 +49,8 @@ def anular(id_venta: int = Path(ge=1), pg=Depends(get_pg), mongo=Depends(get_mon
                 raise ErrorNegocio(
                     f"La venta {id_venta} esta {venta['estado']}; solo se anulan ventas pagadas",
                     {"estado_actual": venta["estado"]})
-            cur.execute(f"DELETE FROM {cfg.T_BOLETAS} WHERE id_venta = %s", (id_venta,))
+            # Las sillas se liberan solas: el trigger trg_ventas_liberar_boletas de la migracion
+            # pasa las boletas a 'Anulada' (queda el historial) al anular la venta.
             cur.execute("UPDATE ventas SET estado = %s WHERE id_venta = %s",
                         (cfg.ESTADO_VENTA_ANULADA, id_venta))
     respuesta = {"id_venta": id_venta, "estado": cfg.ESTADO_VENTA_ANULADA, "comprobante": "anulado"}

@@ -54,7 +54,7 @@ def limpiar():
 
 def _silla_libre(id_funcion, n=0):
     r = cliente.get(f"/funciones/{id_funcion}/sillas").json()
-    return [s["id_asiento"] for s in r["sillas"] if not s["ocupada"]][n]
+    return [s["id_asiento"] for s in r["sillas"] if not s["ocupada"] and not s["bloqueada"]][n]
 
 
 def _compra(id_funcion, asientos, **extra):
@@ -76,7 +76,7 @@ def test_mapa_de_sillas(funcion_prueba):
     r = cliente.get(f"/funciones/{funcion_prueba}/sillas")
     assert r.status_code == 200
     d = r.json()
-    assert d["total"] == d["ocupadas"] + d["disponibles"] and d["total"] > 0
+    assert d["total"] == d["ocupadas"] + d["bloqueadas"] + d["disponibles"] and d["total"] > 0
 
 
 def test_sillas_funcion_inexistente():
@@ -146,8 +146,9 @@ def test_asiento_de_otra_sala_se_rechaza(funcion_prueba):
     otra = _pg_uno(f"SELECT a.id_asiento FROM {cfg.T_ASIENTOS} a WHERE a.id_sala <> "
                    "(SELECT id_sala FROM funciones WHERE id_funcion=%s) LIMIT 1", (funcion_prueba,))[0]
     r = _compra(funcion_prueba, [otra])
-    # Hasta que Erika agregue el trigger de coherencia sala/asiento esto puede dar 201 (ver README).
-    assert r.status_code in (201, 409, 422), r.text
+    # fn_boletas_validar (migracion) rechaza una silla que no es de la sala de la funcion.
+    assert r.status_code == 409, r.text
+    assert "sala" in r.json()["mensaje"]
 
 
 def test_mongo_caido_revierte_la_venta(funcion_prueba, monkeypatch):
@@ -224,3 +225,30 @@ def test_caso3_con_mongo_caido_devuelve_solo_ventas(monkeypatch):
     assert r.status_code == 200
     d = r.json()
     assert d["mongo_disponible"] is False and d["advertencia"] and "incidentes" not in d["salas"][0]
+
+
+def test_anular_conserva_historial_de_boletas(funcion_prueba):
+    silla = _silla_libre(funcion_prueba)
+    venta = _compra(funcion_prueba, [silla]).json()
+    assert cliente.post(f"/ventas/{venta['id_venta']}/anular").status_code == 200
+    filas = _pg_uno(f"SELECT count(*), count(*) FILTER (WHERE estado = 'Anulada') "
+                    f"FROM {cfg.T_BOLETAS} WHERE id_venta = %s", (venta["id_venta"],))
+    assert filas == (1, 1)          # la boleta sigue existiendo, marcada Anulada por el trigger
+    assert _silla_libre(funcion_prueba) == silla
+
+
+def test_silla_bloqueada_no_se_vende_y_se_marca_en_el_mapa(funcion_prueba):
+    silla = _silla_libre(funcion_prueba)
+    with conectar_postgres() as c:
+        c.execute(f"UPDATE {cfg.T_ASIENTOS} SET estado = 'Bloqueado' WHERE id_asiento = %s", (silla,))
+        c.commit()
+    try:
+        mapa = cliente.get(f"/funciones/{funcion_prueba}/sillas").json()
+        fila = next(s for s in mapa["sillas"] if s["id_asiento"] == silla)
+        assert fila["bloqueada"] is True and mapa["bloqueadas"] >= 1
+        r = _compra(funcion_prueba, [silla])
+        assert r.status_code == 409, r.text
+    finally:
+        with conectar_postgres() as c:
+            c.execute(f"UPDATE {cfg.T_ASIENTOS} SET estado = 'Activo' WHERE id_asiento = %s", (silla,))
+            c.commit()
