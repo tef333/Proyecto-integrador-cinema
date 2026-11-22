@@ -9,6 +9,9 @@
 // id_pelicula (no hay llave foranea entre motores: la integridad es eventual).
 // Embebido: ficha (director, reparto, paises, generos), versiones y premios.
 // Referenciado: solo id_pelicula de PostgreSQL.
+// Estructura variable: cada version lleva su propia duracion (duracion_min) y la ficha
+// trae la clasificacion por pais (clasificaciones). ficha.duracion_min y ficha.clasificacion
+// siguen siendo la copia de PostgreSQL (version y clasificacion de cartelera en Colombia).
 // Campos opcionales: premios y observaciones (no todas las peliculas los tienen).
 
 db.fichas_tecnicas_peliculas.drop();
@@ -30,7 +33,7 @@ db.createCollection("fichas_tecnicas_peliculas", {
         },
         ficha: {
           bsonType: "object",
-          required: ["titulo_original", "anio_estreno", "directores", "paises", "idioma_original", "generos", "duracion_min", "clasificacion", "reparto_principal"],
+          required: ["titulo_original", "anio_estreno", "directores", "paises", "idioma_original", "generos", "duracion_min", "clasificacion", "clasificaciones", "reparto_principal"],
           properties: {
             titulo_original: {
               bsonType: "string",
@@ -63,11 +66,24 @@ db.createCollection("fichas_tecnicas_peliculas", {
               bsonType: ["int", "long"],
               minimum: 1,
               maximum: 400,
-              description: "copia de peliculas.duracion_min en PostgreSQL"
+              description: "copia de peliculas.duracion_min en PostgreSQL (version de cartelera)"
             },
             clasificacion: {
               enum: ["Todo publico", "+7", "+12", "+15", "+18"],
-              description: "copia de peliculas.clasificacion en PostgreSQL"
+              description: "copia de peliculas.clasificacion en PostgreSQL (Colombia)"
+            },
+            clasificaciones: {
+              bsonType: "array",
+              minItems: 1,
+              description: "clasificacion por pais; la de Colombia debe coincidir con ficha.clasificacion",
+              items: {
+                bsonType: "object",
+                required: ["pais", "clasificacion"],
+                properties: {
+                  pais: { bsonType: "string", minLength: 1 },
+                  clasificacion: { bsonType: "string", minLength: 1 }
+                }
+              }
             },
             reparto_principal: {
               bsonType: "array",
@@ -86,10 +102,10 @@ db.createCollection("fichas_tecnicas_peliculas", {
         versiones: {
           bsonType: "array",
           minItems: 1,
-          description: "versiones (idioma, subtitulos y formato) en las que la pelicula se puede exhibir",
+          description: "versiones (idioma, subtitulos, formato y duracion) en las que la pelicula se puede exhibir",
           items: {
             bsonType: "object",
-            required: ["idioma_audio", "subtitulos", "formato", "tipo_version"],
+            required: ["idioma_audio", "subtitulos", "formato", "tipo_version", "duracion_min"],
             properties: {
               idioma_audio: { bsonType: "string" },
               subtitulos: { bsonType: "string" },
@@ -98,6 +114,12 @@ db.createCollection("fichas_tecnicas_peliculas", {
               },
               tipo_version: {
                 enum: ["Doblada", "Subtitulada", "Original"]
+              },
+              duracion_min: {
+                bsonType: ["int", "long"],
+                minimum: 1,
+                maximum: 400,
+                description: "duracion en minutos de esta version (puede variar, por ejemplo la del director)"
               }
             }
           }

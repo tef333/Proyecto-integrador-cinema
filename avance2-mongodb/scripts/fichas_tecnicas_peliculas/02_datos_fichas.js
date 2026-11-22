@@ -3,8 +3,11 @@
 //
 // Inserta una ficha tecnica por PELICULA (id_pelicula de PostgreSQL), sin id_funcion.
 // Asi las peliculas con dos funciones (Coco, Encanto, Barbie, Parasitos, Mad Max)
-// tienen una sola ficha. Titulo, duracion y clasificacion coinciden con PostgreSQL.
-// Datos de prueba; "versiones" es el catalogo de versiones que el cine puede exhibir.
+// tienen una sola ficha. Titulo, duracion y clasificacion de cartelera coinciden con PostgreSQL.
+// Datos de prueba; "versiones" es el catalogo de versiones que el cine puede exhibir,
+// cada una con su propia duracion (duracion_min). "ficha.clasificaciones" trae la
+// clasificacion por pais: la de Colombia es la de PostgreSQL y la de Estados Unidos es
+// de referencia (NR = sin clasificacion MPA).
 // Son 37 fichas: id_pelicula 1 a 25 (con funciones) y 26 a 37 (catalogo sin
 // funciones programadas, cine colombiano y latinoamericano).
 
@@ -32,6 +35,16 @@ db.fichas_tecnicas_peliculas.insertOne(
     ],
     duracion_min: 180,
     clasificacion: "+15",
+    clasificaciones: [
+      {
+        pais: "Colombia",
+        clasificacion: "+15"
+      },
+      {
+        pais: "Estados Unidos",
+        clasificacion: "R"
+      }
+    ],
     reparto_principal: [
       {
         nombre: "Cillian Murphy",
@@ -52,19 +65,22 @@ db.fichas_tecnicas_peliculas.insertOne(
       idioma_audio: "Inglés",
       subtitulos: "Español",
       formato: "2D",
-      tipo_version: "Subtitulada"
+      tipo_version: "Subtitulada",
+      duracion_min: 180
     },
     {
       idioma_audio: "Inglés",
       subtitulos: "Español",
       formato: "IMAX",
-      tipo_version: "Subtitulada"
+      tipo_version: "Subtitulada",
+      duracion_min: 180
     },
     {
       idioma_audio: "Español",
       subtitulos: "Ninguno",
       formato: "2D",
-      tipo_version: "Doblada"
+      tipo_version: "Doblada",
+      duracion_min: 180
     }
   ],
   premios: [
@@ -98,6 +114,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 105,
       clasificacion: "Todo publico",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "Todo publico"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "PG"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Anthony Gonzalez",
@@ -118,19 +144,22 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 105
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 105
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "3D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 105
       }
     ],
     premios: [
@@ -161,6 +190,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 132,
       clasificacion: "+15",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+15"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Song Kang-ho",
@@ -181,25 +220,29 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Coreano",
         subtitulos: "Español",
         formato: "3D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 132
       },
       {
         idioma_audio: "Coreano",
         subtitulos: "Español",
         formato: "VIP",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 132
       },
       {
         idioma_audio: "Coreano",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 132
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 132
       }
     ],
     premios: [
@@ -230,6 +273,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 166,
       clasificacion: "+12",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+12"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "PG-13"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Timothée Chalamet",
@@ -250,31 +303,36 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "IMAX",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 166
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "IMAX",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 166
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 166
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 166
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "3D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 166
       }
     ],
     premios: [
@@ -305,6 +363,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 128,
       clasificacion: "+7",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+7"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "PG-13"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Ryan Gosling",
@@ -321,13 +389,15 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "VIP",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 128
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 128
       }
     ],
     premios: [
@@ -359,6 +429,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 102,
       clasificacion: "Todo publico",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "Todo publico"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "PG"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Stephanie Beatriz",
@@ -379,19 +459,22 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 102
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 102
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "3D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 102
       }
     ],
     premios: [
@@ -422,6 +505,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 209,
       clasificacion: "+15",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+15"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Robert De Niro",
@@ -442,7 +535,8 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 209
       }
     ],
     actualizado_en: ISODate("2026-11-09T12:00:00-05:00")
@@ -466,6 +560,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 122,
       clasificacion: "+18",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+18"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Joaquin Phoenix",
@@ -486,13 +590,15 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "IMAX",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 122
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 122
       }
     ],
     premios: [
@@ -523,6 +629,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 96,
       clasificacion: "Todo publico",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "Todo publico"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "PG"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Amy Poehler",
@@ -543,19 +659,22 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "3D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 96
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 96
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 96
       }
     ],
     actualizado_en: ISODate("2026-11-09T12:00:00-05:00")
@@ -580,6 +699,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 114,
       clasificacion: "+12",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+12"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "PG-13"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Margot Robbie",
@@ -600,19 +729,22 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 114
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "IMAX",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 114
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 114
       }
     ],
     premios: [
@@ -643,6 +775,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 155,
       clasificacion: "+7",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+7"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "NR"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Philippe Noiret",
@@ -663,7 +805,15 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Italiano",
         subtitulos: "Español",
         formato: "VIP",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 155
+      },
+      {
+        idioma_audio: "Italiano",
+        subtitulos: "Español",
+        formato: "VIP",
+        tipo_version: "Original",
+        duracion_min: 173
       }
     ],
     observaciones: "Existe una versión extendida del director de 173 min; en cartelera se exhibe la versión de estreno de 155 min.",
@@ -689,6 +839,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 120,
       clasificacion: "+15",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+15"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Tom Hardy",
@@ -709,19 +869,22 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 120
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 120
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "IMAX",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 120
       }
     ],
     premios: [
@@ -752,6 +915,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 192,
       clasificacion: "+12",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+12"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "PG-13"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Sam Worthington",
@@ -772,37 +945,43 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "IMAX",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 192
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "3D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 192
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "IMAX",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 192
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "3D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 192
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 192
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 192
       }
     ],
     premios: [
@@ -835,6 +1014,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 148,
       clasificacion: "+12",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+12"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "PG-13"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Leonardo DiCaprio",
@@ -855,13 +1044,15 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "3D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 148
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 148
       }
     ],
     premios: [
@@ -894,6 +1085,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 117,
       clasificacion: "+7",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+7"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "PG"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Shameik Moore",
@@ -914,19 +1115,22 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 117
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 117
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "3D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 117
       }
     ],
     premios: [
@@ -956,6 +1160,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 122,
       clasificacion: "+12",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+12"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Audrey Tautou",
@@ -972,7 +1186,8 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Francés",
         subtitulos: "Español",
         formato: "VIP",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 122
       }
     ],
     actualizado_en: ISODate("2026-11-09T12:00:00-05:00")
@@ -996,6 +1211,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 154,
       clasificacion: "+18",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+18"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "John Travolta",
@@ -1016,7 +1241,8 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 154
       }
     ],
     premios: [
@@ -1048,6 +1274,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 155,
       clasificacion: "+15",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+15"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Russell Crowe",
@@ -1068,19 +1304,22 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "IMAX",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 155
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "IMAX",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 155
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 155
       }
     ],
     premios: [
@@ -1111,6 +1350,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 128,
       clasificacion: "+15",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+15"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Ryan Reynolds",
@@ -1131,25 +1380,29 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 128
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "3D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 128
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 128
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "IMAX",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 128
       }
     ],
     actualizado_en: ISODate("2026-11-09T12:00:00-05:00")
@@ -1175,6 +1428,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 100,
       clasificacion: "Todo publico",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "Todo publico"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "PG"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Auli'i Cravalho",
@@ -1195,19 +1458,22 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 100
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "3D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 100
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 100
       }
     ],
     actualizado_en: ISODate("2026-11-09T12:00:00-05:00")
@@ -1231,6 +1497,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 130,
       clasificacion: "+12",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+12"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "PG-13"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Tom Cruise",
@@ -1251,19 +1527,22 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "3D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 130
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "IMAX",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 130
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 130
       }
     ],
     premios: [
@@ -1294,6 +1573,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 102,
       clasificacion: "+7",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+7"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "PG"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Humphrey Bogart",
@@ -1314,7 +1603,8 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "VIP",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 102
       }
     ],
     premios: [
@@ -1346,6 +1636,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 169,
       clasificacion: "+12",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+12"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "PG-13"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Matthew McConaughey",
@@ -1366,19 +1666,22 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "IMAX",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 169
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "IMAX",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 169
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 169
       }
     ],
     premios: [
@@ -1410,6 +1713,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 175,
       clasificacion: "+15",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+15"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Marlon Brando",
@@ -1430,13 +1743,15 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Doblada"
+        tipo_version: "Doblada",
+        duracion_min: 175
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 175
       }
     ],
     premios: [
@@ -1469,6 +1784,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 141,
       clasificacion: "+18",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+18"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Emma Stone",
@@ -1489,13 +1814,15 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "3D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 141
       },
       {
         idioma_audio: "Inglés",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 141
       }
     ],
     premios: [
@@ -1528,6 +1855,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 125,
       clasificacion: "+12",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+12"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "NR"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Nilbio Torres",
@@ -1548,7 +1885,8 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Original"
+        tipo_version: "Original",
+        duracion_min: 125
       }
     ],
     premios: [
@@ -1582,6 +1920,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 125,
       clasificacion: "+15",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+15"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "NR"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Carmiña Martínez",
@@ -1602,7 +1950,8 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Wayuunaiki",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 125
       }
     ],
     actualizado_en: ISODate("2026-11-09T12:00:00-05:00")
@@ -1629,6 +1978,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 102,
       clasificacion: "+15",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+15"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Julianne Nicholson",
@@ -1649,7 +2008,8 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Original"
+        tipo_version: "Original",
+        duracion_min: 102
       }
     ],
     actualizado_en: ISODate("2026-11-09T12:00:00-05:00")
@@ -1672,6 +2032,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 115,
       clasificacion: "+7",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+7"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "NR"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Frank Ramírez",
@@ -1692,7 +2062,8 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Original"
+        tipo_version: "Original",
+        duracion_min: 115
       }
     ],
     actualizado_en: ISODate("2026-11-09T12:00:00-05:00")
@@ -1715,6 +2086,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 93,
       clasificacion: "+15",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+15"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "NR"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Ramiro Meneses",
@@ -1735,7 +2116,8 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Original"
+        tipo_version: "Original",
+        duracion_min: 93
       }
     ],
     actualizado_en: ISODate("2026-11-09T12:00:00-05:00")
@@ -1758,6 +2140,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 110,
       clasificacion: "+12",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+12"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "NR"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Lady Tabares",
@@ -1778,7 +2170,8 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Original"
+        tipo_version: "Original",
+        duracion_min: 110
       }
     ],
     actualizado_en: ISODate("2026-11-09T12:00:00-05:00")
@@ -1802,6 +2195,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 135,
       clasificacion: "+15",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+15"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Yalitza Aparicio",
@@ -1822,13 +2225,15 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Original"
+        tipo_version: "Original",
+        duracion_min: 135
       },
       {
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "VIP",
-        tipo_version: "Original"
+        tipo_version: "Original",
+        duracion_min: 135
       }
     ],
     premios: [
@@ -1868,6 +2273,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 154,
       clasificacion: "+18",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+18"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Emilio Echevarría",
@@ -1888,7 +2303,8 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Original"
+        tipo_version: "Original",
+        duracion_min: 154
       }
     ],
     premios: [
@@ -1920,6 +2336,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 130,
       clasificacion: "+18",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+18"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Alexandre Rodrigues",
@@ -1940,7 +2366,8 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Portugués",
         subtitulos: "Español",
         formato: "2D",
-        tipo_version: "Subtitulada"
+        tipo_version: "Subtitulada",
+        duracion_min: 130
       }
     ],
     actualizado_en: ISODate("2026-11-09T12:00:00-05:00")
@@ -1965,6 +2392,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 129,
       clasificacion: "+15",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+15"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Ricardo Darín",
@@ -1985,7 +2422,8 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Original"
+        tipo_version: "Original",
+        duracion_min: 129
       }
     ],
     premios: [
@@ -2017,6 +2455,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 122,
       clasificacion: "+15",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+15"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Ricardo Darín",
@@ -2037,7 +2485,8 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Original"
+        tipo_version: "Original",
+        duracion_min: 122
       }
     ],
     actualizado_en: ISODate("2026-11-09T12:00:00-05:00")
@@ -2063,6 +2512,16 @@ db.fichas_tecnicas_peliculas.insertMany([
       ],
       duracion_min: 104,
       clasificacion: "+12",
+      clasificaciones: [
+        {
+          pais: "Colombia",
+          clasificacion: "+12"
+        },
+        {
+          pais: "Estados Unidos",
+          clasificacion: "R"
+        }
+      ],
       reparto_principal: [
         {
           nombre: "Daniela Vega",
@@ -2083,7 +2542,8 @@ db.fichas_tecnicas_peliculas.insertMany([
         idioma_audio: "Español",
         subtitulos: "Ninguno",
         formato: "2D",
-        tipo_version: "Original"
+        tipo_version: "Original",
+        duracion_min: 104
       }
     ],
     premios: [
