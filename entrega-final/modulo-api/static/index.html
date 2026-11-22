@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Altamira Cine - Compra de boletas</title>
+<title>Altamira Cine</title>
 <style>
   :root { --bg:#14110f; --panel:#201b17; --txt:#f2ebe3; --mut:#a89d90; --ok:#4caf7a; --bad:#e0624d; --sel:#e8b04a; --lib:#3a332c; --ocu:#6b2a22; }
   * { box-sizing:border-box; }
@@ -29,11 +29,34 @@
   .msg { margin-top:14px; padding:11px 12px; border-radius:8px; font-size:13px; white-space:pre-wrap; display:none; }
   .msg.ok { display:block; background:#1d3a2a; border:1px solid var(--ok); } .msg.err { display:block; background:#40201b; border:1px solid var(--bad); }
   .msg code { color:var(--mut); }
+
+  nav { display:flex; gap:6px; padding:12px 24px 0; max-width:1200px; margin:auto; flex-wrap:wrap; }
+  nav button { width:auto; margin:0; padding:8px 14px; background:#2a231e; color:var(--mut); font-weight:500; }
+  nav button.on { background:var(--sel); color:#1a1408; font-weight:600; }
+  .vista { display:none; } .vista.on { display:grid; }
+  .fila2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; } .fila2 > div { min-width:0; }
+  textarea { width:100%; padding:9px 10px; border-radius:7px; border:1px solid #4a4037; background:#2a231e; color:var(--txt); font:inherit; min-height:70px; resize:vertical; }
+  .kpis { display:flex; gap:10px; flex-wrap:wrap; margin:6px 0 12px; }
+  .kpi { background:#2a231e; border-radius:8px; padding:8px 12px; min-width:90px; } .kpi b { display:block; font-size:20px; } .kpi span { color:var(--mut); font-size:12px; }
+  .item { border-top:1px solid #342d27; padding:10px 0; font-size:13px; } .item:first-child { border-top:0; }
+  .item small, .mut { color:var(--mut); }
+  .tag { display:inline-block; background:#3a332c; border-radius:10px; padding:1px 8px; font-size:11px; margin:2px 4px 0 0; }
+  .tag.bad { background:var(--ocu); } .tag.ok { background:#1d3a2a; } .tag.sel { background:#5a4720; }
+  .aviso { margin:8px 0; padding:9px 11px; border-radius:8px; background:#40351b; border:1px solid var(--sel); font-size:13px; }
+  pre.json { background:#1a1512; padding:10px; border-radius:8px; overflow:auto; font-size:12px; max-height:360px; }
+  details { margin-top:6px; } summary { cursor:pointer; color:var(--mut); }
 </style>
 </head>
 <body>
-<header><h1>Altamira Cine <small>compra de boletas</small></h1><span id="estado" style="color:var(--mut);font-size:13px"></span></header>
-<main>
+<header><h1>Altamira Cine <small>boletería, reseñas e incidentes</small></h1><span id="estado" style="color:var(--mut);font-size:13px"></span></header>
+<nav id="tabs">
+  <button data-v="v-compra" class="on">Compra</button>
+  <button data-v="v-resenas">Reseñas</button>
+  <button data-v="v-req">Requisitos técnicos</button>
+  <button data-v="v-inc">Incidentes por sala</button>
+  <button data-v="v-cons">Consistencia</button>
+</nav>
+<main id="v-compra" class="vista on">
   <section>
     <h2>Funcion y sillas</h2>
     <select id="funcion"></select>
@@ -60,6 +83,91 @@
       <div id="resAnular" class="msg"></div>
     </section>
   </div>
+</main>
+
+<main id="v-resenas" class="vista">
+  <section>
+    <h2>Función con reseñas (caso 1)</h2>
+    <select id="rFuncion"></select>
+    <div id="rAviso" class="aviso" style="display:none"></div>
+    <div id="rResumen"></div>
+    <div id="rLista"></div>
+  </section>
+  <section>
+    <h2>Escribir reseña</h2>
+    <label>Espectador (id)</label><input id="rEsp" type="number" min="1" value="1">
+    <div class="fila2">
+      <div><label>Calificación (1-5)</label><input id="rCal" type="number" min="1" max="5" value="5"></div>
+      <div><label>¿Recomendaría?</label><select id="rRec"><option value="">Sin responder</option><option value="true">Sí</option><option value="false">No</option></select></div>
+    </div>
+    <label>Comentario</label><textarea id="rCom" placeholder="Qué le pareció la función"></textarea>
+    <label>Etiquetas (separadas por coma)</label><input id="rEt" placeholder="imagen, sonido">
+    <div class="fila2">
+      <div><label>Imagen (1-5)</label><input id="rAimg" type="number" placeholder="opcional"></div>
+      <div><label>Sonido (1-5)</label><input id="rAson" type="number" placeholder="opcional"></div>
+      <div><label>Comodidad (1-5)</label><input id="rAcom" type="number" placeholder="opcional"></div>
+      <div><label>Servicio (1-5)</label><input id="rAser" type="number" placeholder="opcional"></div>
+    </div>
+    <button id="rEnviar">Enviar reseña</button>
+    <div id="rRes" class="msg"></div>
+  </section>
+</main>
+
+<main id="v-req" class="vista">
+  <section style="grid-column:1/-1">
+    <h2>Película con requisitos técnicos (caso 2)</h2>
+    <select id="qPel"></select>
+    <div id="qAviso" class="aviso" style="display:none"></div>
+    <div id="qInfo" class="mut" style="margin:8px 0"></div>
+    <div id="qLista"></div>
+  </section>
+</main>
+
+<main id="v-inc" class="vista">
+  <section>
+    <h2>Incidentes de una sala</h2>
+    <select id="iSala"></select>
+    <div class="fila2">
+      <div><label>Severidad mínima</label><select id="iSevMin"><option value="">Todas</option><option>baja</option><option>media</option><option>alta</option><option>critica</option></select></div>
+      <div><label>Estado</label><select id="iEst"><option value="">Todos</option><option>abierto</option><option>en_revision</option><option>cerrado</option></select></div>
+    </div>
+    <div id="iAviso" class="msg"></div>
+    <div id="iLista" style="margin-top:12px"></div>
+  </section>
+  <section>
+    <h2>Registrar incidente</h2>
+    <div class="fila2">
+      <div><label>Tipo</label><select id="nTipo"><option value="falla_tecnica">Falla técnica</option><option value="queja_servicio">Queja de servicio</option><option value="incidente_seguridad">Seguridad</option></select></div>
+      <div><label>Severidad</label><select id="nSev"><option>baja</option><option selected>media</option><option>alta</option><option>critica</option></select></div>
+    </div>
+    <label>Reportado por</label><select id="nStaff"></select>
+    <label>Función (opcional, id)</label><input id="nFun" type="number" min="1" placeholder="id_funcion">
+    <label>Descripción</label><textarea id="nDesc"></textarea>
+    <div id="nFalla">
+      <label>Equipo</label><input id="fEq" value="Proyector">
+      <div class="fila2"><div><label>Código de error</label><input id="fCod" value="E-100"></div><div><label>Minutos sin servicio</label><input id="fMin" type="number" value="5"></div></div>
+      <label>¿Se canceló la función?</label><select id="fCan"><option value="false">No</option><option value="true">Sí</option></select>
+    </div>
+    <div id="nQueja" style="display:none">
+      <label>Espectador (id)</label><input id="qEsp" type="number" min="1" value="1">
+      <div class="fila2"><div><label>Categoría</label><input id="qCat" value="atencion"></div><div><label>Canal</label><input id="qCan" value="presencial"></div></div>
+    </div>
+    <div id="nSeg" style="display:none">
+      <div class="fila2"><div><label>Tipo de evento</label><input id="sTip" value="disturbio"></div><div><label>Zona</label><input id="sZon" value="lobby"></div></div>
+      <div class="fila2"><div><label>Personas involucradas</label><input id="sPer" type="number" value="1"></div><div><label>¿Autoridad?</label><select id="sAut"><option value="false">No</option><option value="true">Sí</option></select></div></div>
+    </div>
+    <button id="nEnviar">Registrar incidente</button>
+    <div id="nRes" class="msg"></div>
+  </section>
+</main>
+
+<main id="v-cons" class="vista">
+  <section style="grid-column:1/-1">
+    <h2>Panel de consistencia PostgreSQL ↔ MongoDB</h2>
+    <button id="cBtn" style="width:auto;padding:9px 18px;margin-top:0">Revisar ahora</button>
+    <div id="cAviso" class="aviso" style="display:none"></div>
+    <div id="cOut" style="margin-top:12px"></div>
+  </section>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -151,6 +259,130 @@ $('anular').addEventListener('click', async () => {
   const r = await api(`/ventas/${id}/anular`, { method: 'POST' });
   mostrar($('resAnular'), r.ok, r.ok ? `Venta #${id} anulada. Comprobante: ${r.cuerpo.comprobante}${r.cuerpo.advertencia ? '\n' + r.cuerpo.advertencia : ''}` : textoError(r));
   if (r.ok) cargarSillas();
+});
+
+// ---------- Pestañas ----------
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtF = s => s ? String(s).replace('T', ' ').slice(0, 16) : '-';
+const cargadas = {};
+document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.vista').forEach(v => v.classList.toggle('on', v.id === b.dataset.v));
+  if (!cargadas[b.dataset.v] && iniciar[b.dataset.v]) { cargadas[b.dataset.v] = true; iniciar[b.dataset.v](); }
+}));
+function aviso(el, texto) { el.style.display = texto ? 'block' : 'none'; el.textContent = texto || ''; }
+const iniciar = { 'v-resenas': iniResenas, 'v-req': iniReq, 'v-inc': iniInc, 'v-cons': () => {} };
+const post = (ruta, cuerpo) => api(ruta, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
+const estrellas = n => n == null ? '-' : '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n));
+
+// ---------- Reseñas + caso 1 ----------
+async function iniResenas() {
+  const r = await api('/funciones/finalizadas');
+  if (!r.ok) return mostrar($('rRes'), false, textoError(r));
+  $('rFuncion').innerHTML = r.cuerpo.map(x => `<option value="${x.id_funcion}">#${x.id_funcion} · ${esc(x.titulo)} · ${esc(x.sala)} · ${fmtF(x.fecha_hora_inicio)}</option>`).join('');
+  $('rFuncion').addEventListener('change', cargarCaso1);
+  cargarCaso1();
+}
+async function cargarCaso1() {
+  const id = $('rFuncion').value; if (!id) return;
+  const r = await api(`/casos/1/funcion-con-resenas?id_funcion=${id}&limite=20`);
+  if (!r.ok) { $('rResumen').innerHTML = ''; $('rLista').innerHTML = ''; return aviso($('rAviso'), textoError(r)); }
+  const c = r.cuerpo, s = c.resumen || {};
+  aviso($('rAviso'), c.advertencia || (c.mongo_disponible === false ? 'MongoDB no responde: se muestra solo la función.' : ''));
+  const asp = s.aspectos_promedio || {};
+  $('rResumen').innerHTML = `<div class="mut" style="margin:8px 0">${esc(c.funcion.titulo)} · ${esc(c.funcion.sala)} (${esc(c.funcion.tipo_sala)}) · ${fmtF(c.funcion.fecha_hora_inicio)}</div>
+    <div class="kpis">
+      <div class="kpi"><b>${s.total_resenas ?? 0}</b><span>reseñas</span></div>
+      <div class="kpi"><b>${s.calificacion_promedio ?? '-'}</b><span>promedio</span></div>
+      <div class="kpi"><b>${s.recomendarian ?? 0} / ${s.no_recomendarian ?? 0}</b><span>sí / no recomiendan</span></div>
+    </div>` + (Object.keys(asp).length ? `<div class="mut">Aspectos: ` + Object.entries(asp).map(([k, v]) => `${esc(k)} ${v ?? '-'}`).join(' · ') + `</div>` : '');
+  $('rLista').innerHTML = (c.resenas || []).map(x => `<div class="item"><b>${estrellas(x.calificacion)}</b> <small>espectador #${esc(x.id_espectador)} · ${fmtF(x.fecha)}</small>
+      <div>${esc(x.comentario)}</div>${(x.etiquetas || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>`).join('')
+    || '<div class="mut" style="margin-top:10px">Esta función aún no tiene reseñas.</div>';
+}
+$('rEnviar').addEventListener('click', async () => {
+  const num = id => $(id).value === '' ? null : Number($(id).value);
+  const cuerpo = { id_funcion: Number($('rFuncion').value), id_espectador: num('rEsp'), calificacion: num('rCal'), comentario: $('rCom').value };
+  if ($('rRec').value) cuerpo.recomendaria = $('rRec').value === 'true';
+  const et = $('rEt').value.split(',').map(t => t.trim()).filter(Boolean); if (et.length) cuerpo.etiquetas = et;
+  const asp = { imagen: num('rAimg'), sonido: num('rAson'), comodidad: num('rAcom'), servicio: num('rAser') };
+  Object.keys(asp).forEach(k => asp[k] === null && delete asp[k]);
+  if (Object.keys(asp).length) cuerpo.aspectos = asp;
+  const r = await post('/resenas', cuerpo);
+  const m = r.cuerpo || {};
+  mostrar($('rRes'), r.ok, r.ok ? `Reseña ${m.id_resena || ''} registrada` : textoError(r) + (m.motivo ? `\nmotivo: ${m.motivo}` : '') + (m.codigo_mongo ? `\ncódigo MongoDB: ${m.codigo_mongo}` : ''));
+  if (r.ok) { $('rCom').value = ''; cargarCaso1(); }
+});
+
+// ---------- Requisitos técnicos (caso 2) ----------
+async function iniReq() {
+  const r = await api('/peliculas');
+  if (!r.ok) return aviso($('qAviso'), textoError(r));
+  $('qPel').innerHTML = r.cuerpo.map(x => `<option value="${x.id_pelicula}">${esc(x.titulo)}</option>`).join('');
+  $('qPel').addEventListener('change', cargarCaso2); cargarCaso2();
+}
+async function cargarCaso2() {
+  const r = await api(`/casos/2/pelicula-con-requisitos?id_pelicula=${$('qPel').value}`);
+  if (!r.ok) { $('qLista').innerHTML = ''; return aviso($('qAviso'), textoError(r)); }
+  const c = r.cuerpo;
+  aviso($('qAviso'), c.advertencia || (c.mongo_disponible === false ? 'MongoDB no responde: se muestran las funciones sin requisitos.' : ''));
+  $('qInfo').textContent = `${c.pelicula.titulo} · ${c.pelicula.genero} · ${c.pelicula.clasificacion} · ${c.pelicula.duracion_min} min · ${c.funciones.length} funciones`;
+  $('qLista').innerHTML = c.funciones.map(f => {
+    const q = f.requisitos;
+    const cab = `<b>#${f.id_funcion} · ${esc(f.sala)} (${esc(f.tipo_sala)})</b> <small>${fmtF(f.fecha_hora_inicio)} · ${esc(f.idioma)} · ${esc(f.estado)}</small>`;
+    if (!q) return `<div class="item">${cab}<div class="mut">Sin requisitos registrados en MongoDB.</div></div>`;
+    const pen = q.pendientes || [];
+    const pr = q.proyeccion || {}, au = q.audio || {};
+    return `<div class="item">${cab}
+      <div>${pen.length ? `<span class="tag bad">${pen.length} pendiente(s)</span>` : '<span class="tag ok">Todo en regla</span>'}
+      ${pen.map(t => `<span class="tag bad">${esc(t)}</span>`).join('')}</div>
+      <div class="mut">Proyección: ${esc(pr.resolucion)} · ${esc(pr.relacion_aspecto)} · ${esc(pr.fps)} fps · ${esc(pr.tipo_proyector)} | Audio: ${esc(au.formato)}${q.llave_kdm && q.llave_kdm.requerida ? ' | KDM válida hasta ' + fmtF(q.llave_kdm.valida_hasta) : ''}</div>
+      <details><summary>Ver requisito completo</summary><pre class="json">${esc(JSON.stringify(q, null, 2))}</pre></details></div>`;
+  }).join('') || '<div class="mut">Esta película no tiene funciones.</div>';
+}
+
+// ---------- Incidentes ----------
+async function iniInc() {
+  const [s, st] = await Promise.all([api('/salas'), api('/staff')]);
+  if (s.ok) $('iSala').innerHTML = s.cuerpo.map(x => `<option value="${x.id_sala}">${esc(x.nombre)} · ${esc(x.tipo_sala)} · ${esc(x.estado)}</option>`).join('');
+  if (st.ok) $('nStaff').innerHTML = st.cuerpo.map(x => `<option value="${x.id_staff}">${esc(x.nombre)} · ${esc(x.cargo)}</option>`).join('');
+  ['iSala', 'iSevMin', 'iEst'].forEach(i => $(i).addEventListener('change', cargarIncidentes));
+  cargarIncidentes();
+}
+async function cargarIncidentes() {
+  const q = new URLSearchParams(); if ($('iSevMin').value) q.set('severidad_minima', $('iSevMin').value); if ($('iEst').value) q.set('estado', $('iEst').value);
+  const r = await api(`/salas/${$('iSala').value}/incidentes?${q}`);
+  if (!r.ok) { $('iLista').innerHTML = ''; return mostrar($('iAviso'), false, textoError(r)); }
+  $('iAviso').className = 'msg';
+  const cl = { baja: 'ok', media: 'sel', alta: 'bad', critica: 'bad' };
+  $('iLista').innerHTML = `<div class="mut">${r.cuerpo.total} incidente(s)</div>` + r.cuerpo.incidentes.map(x => `<div class="item"><b>${esc(x.codigo)}</b>
+      <span class="tag ${cl[x.severidad] || ''}">${esc(x.severidad)}</span><span class="tag">${esc(x.tipo)}</span><span class="tag">${esc(x.estado)}</span>
+      <div>${esc(x.descripcion)}</div><small>${fmtF(x.fecha_hora)}${x.id_funcion ? ' · función #' + esc(x.id_funcion) : ''}${x.reportado_por ? ' · ' + esc(x.reportado_por.cargo) : ''}</small></div>`).join('');
+}
+$('nTipo').addEventListener('change', () => {
+  $('nFalla').style.display = $('nTipo').value === 'falla_tecnica' ? 'block' : 'none';
+  $('nQueja').style.display = $('nTipo').value === 'queja_servicio' ? 'block' : 'none';
+  $('nSeg').style.display = $('nTipo').value === 'incidente_seguridad' ? 'block' : 'none';
+});
+$('nEnviar').addEventListener('click', async () => {
+  const t = $('nTipo').value;
+  const cuerpo = { tipo: t, severidad: $('nSev').value, descripcion: $('nDesc').value, id_staff: Number($('nStaff').value), id_sala: Number($('iSala').value) };
+  if ($('nFun').value) cuerpo.id_funcion = Number($('nFun').value);
+  if (t === 'falla_tecnica') cuerpo.detalle_falla_tecnica = { equipo: $('fEq').value, codigo_error: $('fCod').value, minutos_interrupcion: Number($('fMin').value), funcion_cancelada: $('fCan').value === 'true' };
+  if (t === 'queja_servicio') cuerpo.detalle_queja = { id_espectador: Number($('qEsp').value), categoria: $('qCat').value, canal: $('qCan').value };
+  if (t === 'incidente_seguridad') cuerpo.detalle_seguridad = { tipo_evento: $('sTip').value, zona: $('sZon').value, personas_involucradas: Number($('sPer').value), se_llamo_autoridad: $('sAut').value === 'true' };
+  const r = await post('/incidentes', cuerpo), m = r.cuerpo || {};
+  mostrar($('nRes'), r.ok, r.ok ? `Incidente ${m.codigo || ''} registrado en la sala elegida` : textoError(r) + (m.codigo_mongo ? `\ncódigo MongoDB: ${m.codigo_mongo}` : ''));
+  if (r.ok) cargarIncidentes();
+});
+
+// ---------- Consistencia ----------
+$('cBtn').addEventListener('click', async () => {
+  const r = await api('/auditoria/consistencia');
+  if (r.estado === 404) { aviso($('cAviso'), 'El endpoint /auditoria/consistencia todavía no está en esta versión de la API (lo agrega el módulo de integración).'); $('cOut').innerHTML = ''; return; }
+  if (!r.ok) { aviso($('cAviso'), textoError(r)); $('cOut').innerHTML = ''; return; }
+  aviso($('cAviso'), '');
+  $('cOut').innerHTML = `<pre class="json">${esc(JSON.stringify(r.cuerpo, null, 2))}</pre>`;
 });
 
 cargarCatalogos();

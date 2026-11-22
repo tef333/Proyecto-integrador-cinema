@@ -59,3 +59,8 @@ La de concurrencia dispara 10 compras simultaneas de la misma silla: esperado 1 
   peticiones chocan.
 - **Reseña sin compra → 409** (`motivo: resena_sin_compra`): no se escribe nada en Mongo.
 - Pruebas: `python -m pytest tests/test_resenas_incidentes.py -v`. Con `MONGO_URI=mock` el 121 se simula; con Atlas real el esquema lo aplica.
+
+## Front (`static/index.html`, en http://localhost:8000/)
+Pestañas: **Compra** · **Reseñas** (caso 1: función con reseñas + formulario, muestra 404/409/422/503) ·
+**Requisitos técnicos** (caso 2: película con requisitos y pendientes por función) · **Incidentes por sala**
+(listado con filtros y registro) · **Consistencia** (llama a `/auditoria/consistencia`; avisa si el endpoint aún no existe).
