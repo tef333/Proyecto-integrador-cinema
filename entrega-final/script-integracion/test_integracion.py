@@ -7,6 +7,7 @@ MongoDB:    se simula con mongomock para poder probar fallos sin depender de
 Ejecutar:  pip install pytest mongomock  &&  pytest -v test_integracion.py
 Cada prueba corre sobre la base y la deja como estaba (borra lo que crea).
 """
+import os
 from unittest import mock
 
 import mongomock
@@ -121,16 +122,22 @@ def test_fallo_de_mongo_revierte_la_venta_en_postgres(pg, mongo):
     assert mongo.comprobantes_venta.count_documents({}) == 0
 
 
+@pytest.mark.skipif(
+    "-pooler" in os.environ.get("PG_DSN", ""),   # db.py ya cargo el .env al importarse
+    reason="el pooler de Neon oculta la caída de la conexión; correr con la cadena directa (sin -pooler)",
+)
 def test_fallo_en_commit_compensa_el_comprobante_de_mongo(pg, mongo):
     """Si PostgreSQL falla al confirmar, el comprobante ya guardado en Mongo se borra.
 
     El fallo es real: justo antes del COMMIT se cierra la conexion desde otra
     sesion (pg_terminate_backend), como si se cayera la red."""
     antes = n_ventas(pg)
+    # El PID se pide al servidor: el proxy de Neon informa otro en info.backend_pid.
+    pid = pg.execute("SELECT pg_backend_pid()").fetchone()[0]
+    pg.rollback()
     original = psycopg.transaction.BaseTransaction._commit_gen
 
     def commit_con_conexion_caida(self):
-        pid = self._conn.info.backend_pid
         with conectar_postgres() as otra:
             otra.autocommit = True
             otra.execute("SELECT pg_terminate_backend(%s)", (pid,))

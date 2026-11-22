@@ -18,7 +18,10 @@ en PostgreSQL y, en la misma operación, su **comprobante** en MongoDB
 
 ## Instalación y configuración
 
+Todos los comandos se ejecutan dentro de la carpeta del módulo:
+
 ```bash
+cd entrega-final/script-integracion
 pip install -r requirements.txt
 cp .env.example .env     # poner PG_DSN y MONGO_URI reales; .env NO se sube a GitHub
 python preparar_mongo.py # una sola vez: crea comprobantes_venta
@@ -81,9 +84,15 @@ Taquilla, `null` en Online). El precio se toma del catálogo, no del cliente.
 ## Pruebas
 
 ```bash
+cd entrega-final/script-integracion
 pip install -r requirements-dev.txt
 PG_DSN="..." pytest -v
 ```
+
+> **Nota:** para correr las 15 pruebas hay que usar la cadena **directa** de Neon,
+> sin `-pooler` en el host. Con la cadena del pooler, la prueba
+> `test_fallo_en_commit_compensa_el_comprobante_de_mongo` se salta (el pooler
+> oculta la caída de la conexión) y el resultado es 14 aprobadas y 1 saltada.
 
 PostgreSQL es real; MongoDB se simula con `mongomock` para poder probar caídas.
 Cada prueba deja la base como estaba. Cubren: venta exitosa y consistencia entre
