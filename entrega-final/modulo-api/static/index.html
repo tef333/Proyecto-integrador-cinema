@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Altamira Cine - Compra de boletas</title>
+<style>
+  :root { --bg:#14110f; --panel:#201b17; --txt:#f2ebe3; --mut:#a89d90; --ok:#4caf7a; --bad:#e0624d; --sel:#e8b04a; --lib:#3a332c; --ocu:#6b2a22; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.45 system-ui,Segoe UI,sans-serif; background:var(--bg); color:var(--txt); }
+  header { padding:16px 24px; border-bottom:1px solid #342d27; display:flex; justify-content:space-between; align-items:baseline; }
+  h1 { font-size:20px; margin:0; } h1 small { color:var(--mut); font-weight:400; margin-left:8px; }
+  main { display:grid; grid-template-columns:1fr 340px; gap:20px; padding:20px 24px; max-width:1200px; margin:auto; }
+  @media (max-width:860px){ main{grid-template-columns:1fr;} }
+  section { background:var(--panel); border-radius:10px; padding:16px; }
+  h2 { font-size:15px; margin:0 0 10px; color:var(--mut); text-transform:uppercase; letter-spacing:.06em; }
+  label { display:block; margin:10px 0 4px; color:var(--mut); font-size:13px; }
+  select,input,button { width:100%; padding:9px 10px; border-radius:7px; border:1px solid #4a4037; background:#2a231e; color:var(--txt); font:inherit; }
+  button { cursor:pointer; background:var(--sel); color:#1a1408; border:0; font-weight:600; margin-top:14px; }
+  button.sec { background:#3a332c; color:var(--txt); } button:disabled { opacity:.45; cursor:not-allowed; }
+  .pantalla { text-align:center; color:var(--mut); border-top:3px solid var(--mut); margin:6px 40px 18px; padding-top:4px; font-size:12px; letter-spacing:.3em; }
+  .fila { display:flex; align-items:center; gap:4px; margin:3px 0; justify-content:center; }
+  .fila b { width:22px; color:var(--mut); font-size:12px; text-align:right; margin-right:6px; }
+  .silla { width:26px; height:26px; border-radius:6px 6px 3px 3px; border:0; padding:0; margin:0; background:var(--lib); color:var(--txt); font-size:10px; cursor:pointer; }
+  .silla.ocupada { background:var(--ocu); cursor:not-allowed; } .silla.sel { background:var(--sel); color:#1a1408; }
+  .leyenda { display:flex; gap:16px; justify-content:center; margin-top:14px; font-size:12px; color:var(--mut); }
+  .leyenda i { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:5px; vertical-align:-2px; }
+  #resumen { color:var(--mut); font-size:13px; margin-top:8px; }
+  .msg { margin-top:14px; padding:11px 12px; border-radius:8px; font-size:13px; white-space:pre-wrap; display:none; }
+  .msg.ok { display:block; background:#1d3a2a; border:1px solid var(--ok); } .msg.err { display:block; background:#40201b; border:1px solid var(--bad); }
+  .msg code { color:var(--mut); }
+</style>
+</head>
+<body>
+<header><h1>Altamira Cine <small>compra de boletas</small></h1><span id="estado" style="color:var(--mut);font-size:13px"></span></header>
+<main>
+  <section>
+    <h2>Funcion y sillas</h2>
+    <select id="funcion"></select>
+    <div id="resumen"></div>
+    <div style="margin-top:16px"><div class="pantalla">PANTALLA</div><div id="mapa"></div></div>
+    <div class="leyenda"><span><i style="background:var(--lib)"></i>Libre</span><span><i style="background:var(--sel)"></i>Elegida</span><span><i style="background:var(--ocu)"></i>Ocupada</span></div>
+  </section>
+  <div>
+    <section>
+      <h2>Comprar</h2>
+      <label>Tipo de boleta</label><select id="tipo"></select>
+      <label>Espectador (id)</label><input id="espectador" type="number" min="1" value="1">
+      <label>Canal</label><select id="canal"><option>Online</option><option>Taquilla</option></select>
+      <div id="bloqueStaff" style="display:none"><label>Taquillero (id_staff)</label><input id="staff" type="number" min="1" value="3"></div>
+      <label>Metodo de pago</label><select id="pago"><option>Tarjeta</option><option>Transferencia</option><option>Efectivo</option></select>
+      <div id="seleccion" style="margin-top:10px;color:var(--mut);font-size:13px">Sillas elegidas: ninguna</div>
+      <button id="comprar" disabled>Comprar</button>
+      <div id="resultado" class="msg"></div>
+    </section>
+    <section style="margin-top:16px">
+      <h2>Anular venta</h2>
+      <label>Numero de venta</label><input id="idVenta" type="number" min="1" placeholder="id_venta">
+      <button id="anular" class="sec">Anular</button>
+      <div id="resAnular" class="msg"></div>
+    </section>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let elegidas = new Set(), funcionActual = null;
+
+function mostrar(el, ok, texto) { el.className = 'msg ' + (ok ? 'ok' : 'err'); el.textContent = texto; }
+
+async function api(ruta, opciones) {
+  try {
+    const r = await fetch(ruta, opciones);
+    const cuerpo = await r.json().catch(() => ({}));
+    return { ok: r.ok, estado: r.status, cuerpo, rid: r.headers.get('X-Request-ID') };
+  } catch (e) {
+    return { ok: false, estado: 0, cuerpo: { error: 'sin_conexion', mensaje: 'No se pudo contactar con la API' }, rid: null };
+  }
+}
+
+function textoError(r) {
+  const c = r.cuerpo || {};
+  let t = `[${r.estado}] ${c.mensaje || c.detail || 'Error'}`;
+  if (c.campos) t += '\n' + c.campos.map(x => `- ${x.campo}: ${x.motivo}`).join('\n');
+  if (r.rid) t += `\nrequest_id: ${r.rid}`;
+  return t;
+}
+
+async function cargarCatalogos() {
+  const [f, t, h] = await Promise.all([api('/funciones'), api('/tipos-boleta'), api('/health')]);
+  $('estado').textContent = h.ok ? 'PostgreSQL y MongoDB en linea' : 'Atencion: ' + JSON.stringify(h.cuerpo);
+  $('estado').style.color = h.ok ? 'var(--ok)' : 'var(--bad)';
+  if (!f.ok) { mostrar($('resultado'), false, textoError(f)); return; }
+  $('funcion').innerHTML = f.cuerpo.map(x =>
+    `<option value="${x.id_funcion}">#${x.id_funcion} · ${x.titulo} · ${x.sala} · ${x.fecha_hora_inicio.replace('T',' ').slice(0,16)}</option>`).join('');
+  if (t.ok) $('tipo').innerHTML = t.cuerpo.map(x => `<option value="${x.id_tipo_boleta}">${x.nombre} · $${Number(x.precio).toLocaleString('es-CO')}</option>`).join('');
+  if (f.cuerpo.length) cargarSillas();
+}
+
+async function cargarSillas() {
+  funcionActual = Number($('funcion').value); elegidas.clear(); pintarSeleccion();
+  const r = await api(`/funciones/${funcionActual}/sillas`);
+  if (!r.ok) { $('mapa').innerHTML = ''; mostrar($('resultado'), false, textoError(r)); return; }
+  const d = r.cuerpo;
+  $('resumen').textContent = `${d.disponibles} libres de ${d.total} · funcion ${d.estado_funcion}`;
+  const filas = {};
+  d.sillas.forEach(s => (filas[s.fila] ??= []).push(s));
+  $('mapa').innerHTML = Object.entries(filas).map(([fila, sillas]) =>
+    `<div class="fila"><b>${fila}</b>` + sillas.map(s =>
+      `<button class="silla ${s.ocupada ? 'ocupada' : ''}" data-id="${s.id_asiento}" ${s.ocupada ? 'disabled' : ''} title="${fila}${s.numero}">${s.numero}</button>`).join('') + '</div>').join('');
+}
+
+function pintarSeleccion() {
+  document.querySelectorAll('.silla').forEach(b => b.classList.toggle('sel', elegidas.has(Number(b.dataset.id))));
+  $('seleccion').textContent = elegidas.size ? `Sillas elegidas: ${elegidas.size}` : 'Sillas elegidas: ninguna';
+  $('comprar').disabled = elegidas.size === 0;
+}
+
+$('mapa').addEventListener('click', e => {
+  const b = e.target.closest('.silla'); if (!b || b.disabled) return;
+  const id = Number(b.dataset.id);
+  if (elegidas.has(id)) elegidas.delete(id);
+  else if (elegidas.size < 10) elegidas.add(id);
+  pintarSeleccion();
+});
+$('funcion').addEventListener('change', cargarSillas);
+$('canal').addEventListener('change', () => { $('bloqueStaff').style.display = $('canal').value === 'Taquilla' ? 'block' : 'none'; });
+
+$('comprar').addEventListener('click', async () => {
+  $('comprar').disabled = true;
+  const taquilla = $('canal').value === 'Taquilla';
+  const cuerpo = {
+    id_funcion: funcionActual, id_espectador: Number($('espectador').value), id_tipo_boleta: Number($('tipo').value),
+    ids_asiento: [...elegidas], canal_venta: $('canal').value, metodo_pago: $('pago').value,
+    id_staff: taquilla ? Number($('staff').value) : null,
+    idempotency_key: crypto.randomUUID(),
+  };
+  const r = await api('/ventas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
+  if (r.ok) {
+    const c = r.cuerpo;
+    mostrar($('resultado'), true, `Venta #${c.id_venta} registrada\n${c.titulo_pelicula} · ${c.nombre_sala}\nTotal: $${Number(c.total).toLocaleString('es-CO')}\nComprobante: ${c.comprobante_id}`);
+    $('idVenta').value = c.id_venta;
+  } else {
+    mostrar($('resultado'), false, textoError(r));
+  }
+  await cargarSillas();      // si otra persona se llevo la silla, el mapa se actualiza
+});
+
+$('anular').addEventListener('click', async () => {
+  const id = Number($('idVenta').value);
+  if (!id) return mostrar($('resAnular'), false, 'Escriba el numero de venta');
+  const r = await api(`/ventas/${id}/anular`, { method: 'POST' });
+  mostrar($('resAnular'), r.ok, r.ok ? `Venta #${id} anulada. Comprobante: ${r.cuerpo.comprobante}${r.cuerpo.advertencia ? '\n' + r.cuerpo.advertencia : ''}` : textoError(r));
+  if (r.ok) cargarSillas();
+});
+
+cargarCatalogos();
+</script>
+</body>
+</html>
