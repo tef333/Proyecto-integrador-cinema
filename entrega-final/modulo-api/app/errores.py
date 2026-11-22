@@ -12,7 +12,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from psycopg import errors as pgerr
-from pymongo.errors import PyMongoError
+from pymongo.errors import DuplicateKeyError, PyMongoError, WriteError
 
 from . import config  # noqa: F401
 from db import ErrorConfiguracion
@@ -27,6 +27,12 @@ def _resp(request: Request, estado: int, codigo: str, mensaje: str, **detalle) -
     if rid:
         cuerpo["request_id"] = rid
     return JSONResponse(status_code=estado, content=cuerpo)
+
+
+def _recortar(info, limite=600):
+    """Detalle del validador de MongoDB, acotado para no devolver respuestas enormes."""
+    texto = str(info)
+    return texto if len(texto) <= limite else texto[:limite] + "..."
 
 
 def registrar_manejadores(app: FastAPI) -> None:
@@ -70,6 +76,23 @@ def registrar_manejadores(app: FastAPI) -> None:
     @app.exception_handler(psycopg.OperationalError)
     async def _pg_caido(request: Request, e: psycopg.OperationalError):
         return _resp(request, 503, "postgres_no_disponible", "PostgreSQL no responde, intente de nuevo")
+
+    @app.exception_handler(DuplicateKeyError)         # indice unico de MongoDB (E11000)
+    async def _mongo_duplicado(request: Request, e: DuplicateKeyError):
+        patron = (e.details or {}).get("keyPattern") or {}
+        return _resp(request, 409, "documento_duplicado",
+                     "Ya existe un documento con esos datos (indice unico de MongoDB)",
+                     indice=sorted(patron) or None)
+
+    @app.exception_handler(WriteError)                # $jsonSchema incumplido = codigo 121
+    async def _mongo_escritura(request: Request, e: WriteError):
+        if e.code == 121:
+            info = (e.details or {}).get("errInfo", {}).get("details", {})
+            return _resp(request, 422, "documento_invalido",
+                         "MongoDB rechazo el documento: no cumple el esquema de la coleccion (error 121)",
+                         codigo_mongo=121, detalle_bd=_recortar(info))
+        log.error("WriteError de MongoDB no controlado: %s", e)
+        return _resp(request, 500, "error_interno", "Error interno; avise al equipo con el request_id")
 
     @app.exception_handler(PyMongoError)
     async def _mongo_caido(request: Request, e: PyMongoError):
