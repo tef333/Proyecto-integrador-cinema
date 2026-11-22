@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from . import config  # noqa: F401
 from .errores import registrar_manejadores
-from .rutas import casos, catalogo, ventas, sillas
+from .rutas import casos, catalogo, incidentes, resenas, ventas, sillas
 from .dependencias import _mongo
 from db import conectar_postgres
 
@@ -47,7 +47,8 @@ def health():
     return JSONResponse(status_code=200 if ok else 503, content=estado)
 
 
-for r in (catalogo.router, sillas.router, ventas.router, casos.router):
+for r in (catalogo.router, sillas.router, ventas.router, casos.router,
+          resenas.router, incidentes.router):
     app.include_router(r)
 
 _estaticos = Path(__file__).resolve().parents[1] / "static"
