@@ -33,7 +33,7 @@ Formato de error: `{"error": codigo, "mensaje": texto, "request_id": id, ...}`.
 ## Pruebas
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest tests -v                  # 22 pruebas; crean ventas 'test-...' y las borran
+python -m pytest tests -v                  # 51 pruebas (ventas, sillas, caso 3, reseñas, incidentes, casos 1 y 2); crean ventas 'test-...' y las borran
 python pruebas/concurrencia.py --funcion <id_funcion_futura> --hilos 10 --salida concurrencia.txt
 ```
 La de concurrencia dispara 10 compras simultaneas de la misma silla: esperado 1 x 201 y 9 x 409.

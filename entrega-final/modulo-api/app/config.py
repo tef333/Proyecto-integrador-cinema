@@ -23,8 +23,9 @@ else:
     )
 
 # ---- Nombres del esquema de Erika (plan del equipo; confirmar con 06_migracion_final.sql)
-T_ASIENTOS = "asientos"            # id_asiento, id_sala, fila, numero
-T_BOLETAS = "boletas"              # id_venta, id_funcion, id_asiento  (UNIQUE id_funcion+id_asiento)
+T_ASIENTOS = "asientos"            # id_asiento, id_sala, fila, numero, tipo, estado (Activo/Bloqueado)
+T_BOLETAS = "boletas"              # id_venta, id_funcion, id_asiento, estado (Valida/Anulada);
+                                   # indice unico parcial (id_funcion, id_asiento) WHERE estado='Valida'
 COL_IDEMPOTENCIA = "idempotency_key"   # ventas.idempotency_key (UNIQUE)
 ESTADO_VENTA_PAGADA = "Pagada"
 ESTADO_VENTA_ANULADA = "Anulada"

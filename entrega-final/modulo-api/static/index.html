@@ -22,7 +22,7 @@
   .fila { display:flex; align-items:center; gap:4px; margin:3px 0; justify-content:center; }
   .fila b { width:22px; color:var(--mut); font-size:12px; text-align:right; margin-right:6px; }
   .silla { width:26px; height:26px; border-radius:6px 6px 3px 3px; border:0; padding:0; margin:0; background:var(--lib); color:var(--txt); font-size:10px; cursor:pointer; }
-  .silla.ocupada { background:var(--ocu); cursor:not-allowed; } .silla.sel { background:var(--sel); color:#1a1408; }
+  .silla.ocupada { background:var(--ocu); cursor:not-allowed; } .silla.bloqueada { background:#2a2623; color:#6d645b; text-decoration:line-through; cursor:not-allowed; } .silla.vip { box-shadow:inset 0 -3px 0 #c9a227; } .silla.sel { background:var(--sel); color:#1a1408; }
   .leyenda { display:flex; gap:16px; justify-content:center; margin-top:14px; font-size:12px; color:var(--mut); }
   .leyenda i { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:5px; vertical-align:-2px; }
   #resumen { color:var(--mut); font-size:13px; margin-top:8px; }
@@ -209,12 +209,12 @@ async function cargarSillas() {
   const r = await api(`/funciones/${funcionActual}/sillas`);
   if (!r.ok) { $('mapa').innerHTML = ''; mostrar($('resultado'), false, textoError(r)); return; }
   const d = r.cuerpo;
-  $('resumen').textContent = `${d.disponibles} libres de ${d.total} · funcion ${d.estado_funcion}`;
+  $('resumen').textContent = `${d.disponibles} libres de ${d.total}${d.bloqueadas ? ' (' + d.bloqueadas + ' fuera de servicio)' : ''} · funcion ${d.estado_funcion}`;
   const filas = {};
   d.sillas.forEach(s => (filas[s.fila] ??= []).push(s));
   $('mapa').innerHTML = Object.entries(filas).map(([fila, sillas]) =>
     `<div class="fila"><b>${fila}</b>` + sillas.map(s =>
-      `<button class="silla ${s.ocupada ? 'ocupada' : ''}" data-id="${s.id_asiento}" ${s.ocupada ? 'disabled' : ''} title="${fila}${s.numero}">${s.numero}</button>`).join('') + '</div>').join('');
+      `<button class="silla ${s.ocupada ? 'ocupada' : ''} ${s.bloqueada ? 'bloqueada' : ''} ${s.tipo === 'VIP' ? 'vip' : ''}" data-id="${s.id_asiento}" ${(s.ocupada || s.bloqueada) ? 'disabled' : ''} title="${fila}${s.numero}${s.tipo === 'VIP' ? ' (VIP)' : ''}${s.bloqueada ? ' - fuera de servicio' : ''}">${s.numero}</button>`).join('') + '</div>').join('');
 }
 
 function pintarSeleccion() {
