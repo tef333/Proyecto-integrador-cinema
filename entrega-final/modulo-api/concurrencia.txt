@@ -1,0 +1,17 @@
+Prueba de concurrencia: 10 compradores, funcion 20, silla 179
+
+ # espectador  HTTP  segundos  resultado
+ 1          1   409      2.61  silla_ocupada: Una de las sillas ya fue vendida para esta funcion
+ 2          2   409      2.68  silla_ocupada: Una de las sillas ya fue vendida para esta funcion
+ 3          3   409      2.54  silla_ocupada: Una de las sillas ya fue vendida para esta funcion
+ 4          4   409      2.65  silla_ocupada: Una de las sillas ya fue vendida para esta funcion
+ 5          5   409      2.46  silla_ocupada: Una de las sillas ya fue vendida para esta funcion
+ 6          6   409      2.70  silla_ocupada: Una de las sillas ya fue vendida para esta funcion
+ 7          7   409      2.58  silla_ocupada: Una de las sillas ya fue vendida para esta funcion
+ 8          8   409      2.50  silla_ocupada: Una de las sillas ya fue vendida para esta funcion
+ 9          9   409      2.48  silla_ocupada: Una de las sillas ya fue vendida para esta funcion
+10         10   201      2.43  venta #310
+
+Resumen: 201 x1, 409 x9
+RESULTADO: CORRECTO - una sola venta, el resto rechazado con 409
+Limpieza: venta #310 anulada (HTTP 200); la silla vuelve a quedar libre
