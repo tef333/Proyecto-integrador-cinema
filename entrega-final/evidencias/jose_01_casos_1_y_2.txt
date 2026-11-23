@@ -1,0 +1,214 @@
+======================================================================
+POSTGRESQL (Neon) - casos_1_y_2.sql  [psql, default_transaction_read_only=on]
+======================================================================
+SELECT f.id_funcion, f.id_pelicula, p.titulo, p.genero, p.clasificacion,
+
+       s.id_sala, s.nombre AS sala, s.tipo_sala, f.idioma, f.fecha_hora_inicio, f.estado
+
+FROM funciones f
+
+JOIN peliculas p ON p.id_pelicula = f.id_pelicula
+
+JOIN salas s     ON s.id_sala = f.id_sala
+
+WHERE f.id_funcion = 10;
+ id_funcion | id_pelicula | titulo | genero  | clasificacion | id_sala |  sala  | tipo_sala | idioma  |  fecha_hora_inicio  |   estado   
+------------+-------------+--------+---------+---------------+---------+--------+-----------+---------+---------------------+------------
+         10 |          10 | Barbie | Comedia | +12           |       1 | Sala 1 | 2D        | Español | 2026-10-29 17:00:00 | Finalizada
+(1 fila)
+
+SELECT id_pelicula, titulo, genero, clasificacion, duracion_min
+
+FROM peliculas WHERE id_pelicula = 10;
+ id_pelicula | titulo | genero  | clasificacion | duracion_min 
+-------------+--------+---------+---------------+--------------
+          10 | Barbie | Comedia | +12           |          114
+(1 fila)
+
+SELECT f.id_funcion, s.id_sala, s.nombre AS sala, s.tipo_sala, f.idioma,
+
+       f.fecha_hora_inicio, f.estado
+
+FROM funciones f
+
+JOIN salas s ON s.id_sala = f.id_sala
+
+WHERE f.id_pelicula = 10
+
+ORDER BY f.fecha_hora_inicio;
+ id_funcion | id_sala |   sala    | tipo_sala | idioma  |  fecha_hora_inicio  |   estado   
+------------+---------+-----------+-----------+---------+---------------------+------------
+         10 |       1 | Sala 1    | 2D        | Español | 2026-10-29 17:00:00 | Finalizada
+         27 |       5 | Sala IMAX | IMAX      | Español | 2026-11-20 17:00:00 | Programada
+(2 filas)
+
+
+--- sin errores (stderr vacio) ---
+
+codigo de salida psql: 0
+
+======================================================================
+MONGODB (Atlas, cinema_avance2) - casos_1_y_2.js
+======================================================================
+colecciones existentes (documentos):
+  comprobantes_venta: 1
+  fichas_tecnicas_peliculas: 37
+  reportes_incidentes: 30
+  requisitos_proyeccion: 30
+  resenas_peliculas: 32
+
+--- linea 14: db.resenas_peliculas.aggregate(...) ---
+1 documento(s)
+[
+  {
+    "total_resenas": 3,
+    "calificacion_promedio": 4.0,
+    "recomendarian": 2,
+    "no_recomendarian": 1,
+    "ultima_resena": {
+      "$date": "2026-10-26T17:00:00Z"
+    },
+    "id_funcion": 10,
+    "sin_respuesta": 3,
+    "aspectos_promedio": {
+      "imagen": 5.0,
+      "sonido": null,
+      "comodidad": null,
+      "servicio": 4.0
+    }
+  }
+]
+
+--- linea 123: db.requisitos_proyeccion.aggregate(...) ---
+2 documento(s)
+[
+  {
+    "id_funcion": 10,
+    "id_sala": 1,
+    "titulo_pelicula": "Barbie",
+    "formato_sala": "2D",
+    "proyeccion": {
+      "resolucion": "2K",
+      "relacion_aspecto": "1.85:1",
+      "fps": 24,
+      "tipo_proyector": "Xenón"
+    },
+    "audio": {
+      "formato": "7.1",
+      "idioma": "Español",
+      "subtitulos": {
+        "activos": false
+      }
+    },
+    "llave_kdm": {
+      "requerida": true,
+      "valida_hasta": {
+        "$date": "2026-10-25T22:00:00Z"
+      }
+    },
+    "pendientes": [],
+    "total_pendientes": 0
+  },
+  {
+    "id_funcion": 27,
+    "id_sala": 5,
+    "titulo_pelicula": "Barbie",
+    "formato_sala": "IMAX",
+    "proyeccion": {
+      "resolucion": "4K",
+      "relacion_aspecto": "1.90:1",
+      "fps": 24,
+      "tipo_proyector": "Láser"
+    },
+    "audio": {
+      "formato": "IMAX 12.0",
+      "idioma": "Español",
+      "subtitulos": {
+        "activos": false
+      }
+    },
+    "llave_kdm": {
+      "requerida": true,
+      "valida_hasta": {
+        "$date": "2026-11-16T22:00:00Z"
+      }
+    },
+    "requisitos_imax": {
+      "alineacion_doble_proyector": true,
+      "calibracion_sonido_12_canales": true,
+      "version_expandida": false
+    },
+    "ensayo_tecnico": {
+      "requerido": true,
+      "fecha": {
+        "$date": "2026-11-15T19:00:00Z"
+      },
+      "responsable": "Proyeccionista de turno"
+    },
+    "pendientes": [
+      "Prueba de imagen y enfoque",
+      "Prueba de sonido por canal",
+      "KDM cargada en el servidor",
+      "Alineación de los dos proyectores",
+      "Calibración IMAX de sonido"
+    ],
+    "total_pendientes": 5
+  }
+]
+
+--- linea 114: db.resenas_peliculas.find({id_funcion: 10}).sort({fecha: -1}).limit(20) ---
+3 documento(s)
+[
+  {
+    "id_resena": 19,
+    "id_pelicula": 10,
+    "id_funcion": 10,
+    "id_espectador": 25,
+    "calificacion": 3,
+    "comentario": "Está bien, pero esperaba más profundidad en la historia.",
+    "fecha": {
+      "$date": "2026-10-26T17:00:00Z"
+    },
+    "recomendaria": false
+  },
+  {
+    "id_resena": 20,
+    "id_pelicula": 10,
+    "id_funcion": 10,
+    "id_espectador": 9,
+    "calificacion": 5,
+    "comentario": "Mejor de lo que esperaba, con una dirección de arte increíble.",
+    "fecha": {
+      "$date": "2026-10-25T17:00:00Z"
+    },
+    "recomendaria": true,
+    "etiquetas": [
+      "dirección de arte"
+    ],
+    "aspectos": {
+      "imagen": 5
+    }
+  },
+  {
+    "id_resena": 18,
+    "id_pelicula": 10,
+    "id_funcion": 10,
+    "id_espectador": 10,
+    "calificacion": 4,
+    "comentario": "Colorida, inteligente y muy divertida; la sala estuvo llena.",
+    "fecha": {
+      "$date": "2026-10-24T17:00:00Z"
+    },
+    "recomendaria": true,
+    "etiquetas": [
+      "comedia"
+    ],
+    "aspectos": {
+      "servicio": 4
+    }
+  }
+]
+
+--- indices mencionados en el .js ---
+resenas_peliculas: ['_id_', 'uq_id_resena', 'ix_pelicula_fecha', 'ix_espectador', 'ix_funcion'] -> ix_funcion existe
+requisitos_proyeccion: ['_id_', 'uq_id_funcion', 'ix_formato_funcion', 'ix_id_pelicula'] -> ix_id_pelicula existe

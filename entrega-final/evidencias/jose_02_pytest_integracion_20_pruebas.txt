@@ -1,0 +1,27 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.7, pytest-9.2.0, pluggy-1.7.0 -- C:\Users\Kayden\AppData\Local\Programs\Python\Python313\python.exe
+rootdir: C:\Users\Kayden\Proyecto-integrador-cinema\entrega-final\script-integracion
+collecting ... collected 20 items
+
+test_integracion.py::test_venta_exitosa_deja_ambos_motores_consistentes PASSED [  5%]
+test_integracion.py::test_regla_de_negocio_no_escribe_en_ningun_motor PASSED [ 10%]
+test_integracion.py::test_funcion_inexistente_es_404 PASSED              [ 15%]
+test_integracion.py::test_tipo_boleta_inexistente_es_404 PASSED          [ 20%]
+test_integracion.py::test_entradas_invalidas_son_422[cambio0] PASSED     [ 25%]
+test_integracion.py::test_entradas_invalidas_son_422[cambio1] PASSED     [ 30%]
+test_integracion.py::test_entradas_invalidas_son_422[cambio2] PASSED     [ 35%]
+test_integracion.py::test_entradas_invalidas_son_422[cambio3] PASSED     [ 40%]
+test_integracion.py::test_entradas_invalidas_son_422[cambio4] PASSED     [ 45%]
+test_integracion.py::test_entradas_invalidas_son_422[cambio5] PASSED     [ 50%]
+test_integracion.py::test_entradas_invalidas_son_422[cambio6] PASSED     [ 55%]
+test_integracion.py::test_campos_faltantes PASSED                        [ 60%]
+test_integracion.py::test_fallo_de_mongo_revierte_la_venta_en_postgres PASSED [ 65%]
+test_integracion.py::test_fallo_en_commit_compensa_el_comprobante_de_mongo PASSED [ 70%]
+test_integracion.py::test_no_se_duplica_el_comprobante_de_una_venta PASSED [ 75%]
+test_integracion.py::test_venta_con_ids_asiento_crea_boletas_y_comprobante PASSED [ 80%]
+test_integracion.py::test_silla_ocupada_es_409_y_no_deja_comprobante PASSED [ 85%]
+test_integracion.py::test_misma_idempotency_key_crea_una_sola_venta PASSED [ 90%]
+test_integracion.py::test_misma_idempotency_key_en_dos_hilos_crea_una_sola_venta PASSED [ 95%]
+test_integracion.py::test_sin_ids_asiento_asigna_sillas_libres PASSED    [100%]
+
+======================== 20 passed in 81.33s (0:01:21) ========================

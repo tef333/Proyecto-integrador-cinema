@@ -1,0 +1,238 @@
+Caso 3: incidentes por sala en cinema_avance2.reportes_incidentes
+Fecha: 22/11/2026 23:04. Periodo: 15/10/2026 al 24/11/2026, sin filtro de tipo, severidad minima baja.
+Documentos en la coleccion: 30
+Consulta ($match y $group, igual que la API):
+[
+  {
+    "$match": {
+      "fecha_hora": {
+        "$gte": {
+          "$date": "2026-10-15T00:00:00Z"
+        },
+        "$lt": {
+          "$date": "2026-11-25T00:00:00Z"
+        }
+      },
+      "id_sala": {
+        "$exists": true
+      },
+      "severidad": {
+        "$in": [
+          "baja",
+          "media",
+          "alta",
+          "critica"
+        ]
+      }
+    }
+  },
+  {
+    "$group": {
+      "_id": "$id_sala",
+      "incidentes": {
+        "$sum": 1
+      },
+      "criticos": {
+        "$sum": {
+          "$cond": [
+            {
+              "$eq": [
+                "$severidad",
+                "critica"
+              ]
+            },
+            1,
+            0
+          ]
+        }
+      },
+      "sin_resolver": {
+        "$sum": {
+          "$cond": [
+            {
+              "$in": [
+                "$estado",
+                [
+                  "abierto",
+                  "en_revision"
+                ]
+              ]
+            },
+            1,
+            0
+          ]
+        }
+      },
+      "tipos": {
+        "$addToSet": "$tipo"
+      }
+    }
+  }
+]
+
+--- getIndexes() ANTES ---
+  {"v": 2, "key": {"_id": 1}, "name": "_id_"}
+  {"v": 2, "key": {"codigo": 1}, "name": "uq_codigo", "unique": true}
+  {"v": 2, "key": {"tipo": 1, "fecha_hora": -1}, "name": "ix_tipo_fecha"}
+  {"v": 2, "key": {"id_funcion": 1}, "name": "ix_id_funcion", "partialFilterExpression": {"id_funcion": {"$exists": true}}}
+  {"v": 2, "key": {"id_sala": 1, "estado": 1}, "name": "ix_sala_estado"}
+--- explain("executionStats") ANTES ---
+  winningPlan: PROJECTION_SIMPLE <- FETCH <- IXSCAN(ix_sala_estado {"id_sala": 1, "estado": 1})
+  rejectedPlans: 0
+  totalKeysExamined: 30
+  totalDocsExamined: 30
+  nReturned (docs que salen del $match): 22
+  grupos (salas) al final del pipeline: 6
+  executionTimeMillis: 1
+  winningPlan completo:
+{
+  "isCached": false,
+  "stage": "PROJECTION_SIMPLE",
+  "transformBy": {
+    "estado": 1,
+    "id_sala": 1,
+    "severidad": 1,
+    "tipo": 1,
+    "_id": 0
+  },
+  "inputStage": {
+    "stage": "FETCH",
+    "filter": {
+      "$and": [
+        {
+          "id_sala": {
+            "$exists": true
+          }
+        },
+        {
+          "fecha_hora": {
+            "$lt": {
+              "$date": "2026-11-25T00:00:00Z"
+            }
+          }
+        },
+        {
+          "fecha_hora": {
+            "$gte": {
+              "$date": "2026-10-15T00:00:00Z"
+            }
+          }
+        },
+        {
+          "severidad": {
+            "$in": [
+              "alta",
+              "baja",
+              "critica",
+              "media"
+            ]
+          }
+        }
+      ]
+    },
+    "inputStage": {
+      "stage": "IXSCAN",
+      "keyPattern": {
+        "id_sala": 1,
+        "estado": 1
+      },
+      "indexName": "ix_sala_estado",
+      "isMultiKey": false,
+      "multiKeyPaths": {
+        "id_sala": [],
+        "estado": []
+      },
+      "isUnique": false,
+      "isSparse": false,
+      "isPartial": false,
+      "indexVersion": 2,
+      "direction": "forward",
+      "indexBounds": {
+        "id_sala": [
+          "[MinKey, MaxKey]"
+        ],
+        "estado": [
+          "[MinKey, MaxKey]"
+        ]
+      }
+    }
+  }
+}
+
+createIndex({ severidad: 1, fecha_hora: 1 }, { name: "ix_severidad_fecha" }) -> ix_severidad_fecha
+
+--- getIndexes() DESPUES ---
+  {"v": 2, "key": {"_id": 1}, "name": "_id_"}
+  {"v": 2, "key": {"codigo": 1}, "name": "uq_codigo", "unique": true}
+  {"v": 2, "key": {"tipo": 1, "fecha_hora": -1}, "name": "ix_tipo_fecha"}
+  {"v": 2, "key": {"id_funcion": 1}, "name": "ix_id_funcion", "partialFilterExpression": {"id_funcion": {"$exists": true}}}
+  {"v": 2, "key": {"id_sala": 1, "estado": 1}, "name": "ix_sala_estado"}
+  {"v": 2, "key": {"severidad": 1, "fecha_hora": 1}, "name": "ix_severidad_fecha"}
+--- explain("executionStats") DESPUES ---
+  winningPlan: PROJECTION_SIMPLE <- FETCH <- IXSCAN(ix_severidad_fecha {"severidad": 1, "fecha_hora": 1})
+  rejectedPlans: 1
+  totalKeysExamined: 26
+  totalDocsExamined: 24
+  nReturned (docs que salen del $match): 22
+  grupos (salas) al final del pipeline: 6
+  executionTimeMillis: 1
+  winningPlan completo:
+{
+  "isCached": false,
+  "stage": "PROJECTION_SIMPLE",
+  "transformBy": {
+    "estado": 1,
+    "id_sala": 1,
+    "severidad": 1,
+    "tipo": 1,
+    "_id": 0
+  },
+  "inputStage": {
+    "stage": "FETCH",
+    "filter": {
+      "id_sala": {
+        "$exists": true
+      }
+    },
+    "inputStage": {
+      "stage": "IXSCAN",
+      "keyPattern": {
+        "severidad": 1,
+        "fecha_hora": 1
+      },
+      "indexName": "ix_severidad_fecha",
+      "isMultiKey": false,
+      "multiKeyPaths": {
+        "severidad": [],
+        "fecha_hora": []
+      },
+      "isUnique": false,
+      "isSparse": false,
+      "isPartial": false,
+      "indexVersion": 2,
+      "direction": "forward",
+      "indexBounds": {
+        "severidad": [
+          "[\"alta\", \"alta\"]",
+          "[\"baja\", \"baja\"]",
+          "[\"critica\", \"critica\"]",
+          "[\"media\", \"media\"]"
+        ],
+        "fecha_hora": [
+          "[new Date(1792022400000), new Date(1795564800000))"
+        ]
+      }
+    }
+  }
+}
+
+--- comparacion ---
+  winningPlan: antes PROJECTION_SIMPLE <- FETCH <- IXSCAN(ix_sala_estado {"id_sala": 1, "estado": 1}) | despues PROJECTION_SIMPLE <- FETCH <- IXSCAN(ix_severidad_fecha {"severidad": 1, "fecha_hora": 1})
+  rejectedPlans: antes 0 | despues 1
+  totalKeysExamined: antes 30 | despues 26
+  totalDocsExamined: antes 30 | despues 24
+  nReturned (docs que salen del $match): antes 22 | despues 22
+  grupos (salas) al final del pipeline: antes 6 | despues 6
+  executionTimeMillis: antes 1 | despues 1
+  indices nuevos: ['ix_severidad_fecha']
+  documentos en la coleccion despues: 30
