@@ -1,0 +1,18 @@
+EVIDENCIAS P2 - ALTAMIRA CINE
+
+01_swagger_documentacion_general.png
+Vista general de Swagger: salud, catálogo, sillas y ventas.
+
+02_swagger_ventas_y_casos_de_uso.png
+Vista de endpoints de ventas, anulación y casos de uso.
+
+03_health_conexion_postgresql_mongodb.png
+Respuesta HTTP 200 del endpoint /health; PostgreSQL y MongoDB en estado ok.
+
+04_mapa_sillas_funcion_20.png
+Respuesta de GET /funciones/20/sillas: 150 sillas, 28 ocupadas, 122 disponibles.
+
+05_prueba_concurrencia_10_compradores.png
+Prueba de 10 compradores: 1 respuesta HTTP 201, 9 respuestas HTTP 409 y anulación posterior de la venta ganadora.
+
+Se excluyeron capturas de consultas administrativas de PostgreSQL que no aportan evidencia directa a la entrega P2.
