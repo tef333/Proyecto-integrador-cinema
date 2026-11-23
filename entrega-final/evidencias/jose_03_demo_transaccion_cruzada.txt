@@ -1,0 +1,15 @@
+
+=== 1. Venta exitosa (PostgreSQL + MongoDB) ===
+antes  : {'ventas_pg': 280, 'ultima_venta_pg': 288, 'comprobantes_mongo': 1}
+resultado: OK {"repetida": false, "id_venta": 357, "estado": "Pagada", "total": "36000.00", "puntos_acumulados": 192, "comprobante_id": "6b03b9de1023e0c1952c3156", "titulo_pelicula": "Mad Max: Furia en el camino", "nombre_sala": "Sala 2", "ids_asiento": [157, 158]}
+despues: {'ventas_pg': 281, 'ultima_venta_pg': 357, 'comprobantes_mongo': 2}
+
+=== 2. Venta rechazada por regla del negocio (funcion ya finalizada) ===
+antes  : {'ventas_pg': 281, 'ultima_venta_pg': 357, 'comprobantes_mongo': 2}
+resultado: ERROR 409 -> {"error": "regla_de_negocio", "mensaje": "La función 1 no está a la venta: está en estado Finalizada"}
+despues: {'ventas_pg': 281, 'ultima_venta_pg': 357, 'comprobantes_mongo': 2}
+
+=== 3. Fallo simulado de MongoDB (la venta debe revertirse) ===
+antes  : {'ventas_pg': 281, 'ultima_venta_pg': 357, 'comprobantes_mongo': 2}
+resultado: ERROR 503 -> {"error": "mongo_no_disponible", "mensaje": "No se pudo guardar el comprobante en MongoDB; la venta fue revertida", "causa": "AutoReconnect"}
+despues: {'ventas_pg': 281, 'ultima_venta_pg': 357, 'comprobantes_mongo': 2}

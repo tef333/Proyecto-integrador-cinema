@@ -1,0 +1,31 @@
+Caso 3: GET /casos/3/ventas-con-incidentes. Analisis de indices
+Fecha del analisis: 22/11/2026. Solo lectura, no se creo ningun indice.
+
+PostgreSQL (Neon): ventas por sala
+Consulta: salas LEFT JOIN funciones del periodo LEFT JOIN ventas en estado Pagada, agrupado por sala.
+Periodo probado: del 15/10/2026 al 24/11/2026. Datos: 6 salas, 30 funciones y 280 ventas.
+EXPLAIN (ANALYZE, BUFFERS): usa idx_funciones_inicio con un Bitmap Index Scan sobre fecha_hora_inicio.
+salas y ventas se leen con Seq Scan, que es lo correcto con tan pocas filas (1 y 4 paginas).
+Tiempo de ejecucion: 0,49 ms. Buffers: 13 paginas, todas en cache (shared hit=13).
+
+MongoDB (Atlas, cinema_avance2): incidentes por sala
+Consulta: $match por fecha_hora, id_sala ($exists) y severidad ($in), luego $group por id_sala.
+explain("executionStats"):
+Sin filtro de tipo usa IXSCAN sobre ix_sala_estado, pero ese indice solo atiende id_sala $exists.
+En la practica recorre toda la coleccion: examina 30 de 30 documentos aunque en una semana solo cumplan 6, y con severidad alta solo 2.
+Con filtro de tipo usa IXSCAN sobre ix_tipo_fecha y examina solo 3 documentos, los mismos 3 que cumplen.
+No aparece COLLSCAN, pero sin filtro de tipo el plan equivale a uno.
+
+Indices que existen hoy
+reportes_incidentes: _id_, uq_codigo (unico), ix_tipo_fecha (tipo, fecha_hora), ix_id_funcion (parcial), ix_sala_estado (id_sala, estado).
+salas: pk_salas, uq_salas_nombre.
+funciones: pk_funciones, uq_funciones_sala_h (id_sala, fecha_hora_inicio), idx_funciones_inicio, idx_funciones_pelicula.
+ventas: pk_ventas, idx_ventas_funcion, idx_ventas_fecha, idx_ventas_espectador, idx_ventas_staff, idx_ventas_tipo_boleta.
+
+Indice que falta (propuesto, no creado)
+MongoDB: un indice que empiece por severidad y fecha, para la consulta sin filtro de tipo:
+db.reportes_incidentes.createIndex({ severidad: 1, fecha_hora: 1 }, { name: "ix_severidad_fecha" })
+Con el, los documentos examinados deberian bajar a los que cumplen el periodo y la severidad, por ejemplo 6 en vez de 30 en una semana. Hay que confirmarlo con explain despues de crearlo.
+PostgreSQL: no falta ningun indice. idx_funciones_inicio filtra el periodo e idx_ventas_funcion ya existe para cuando ventas crezca. Con el volumen actual el planificador prefiere Seq Scan, que es lo correcto.
+
+Dato aparte: 2 de los 30 incidentes no tienen id_sala, asi que el caso 3 nunca los cuenta.

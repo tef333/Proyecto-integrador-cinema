@@ -1,0 +1,65 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.7, pytest-9.2.0, pluggy-1.7.0 -- C:\Users\Kayden\AppData\Local\Programs\Python\Python313\python.exe
+rootdir: C:\Users\Kayden\Proyecto-integrador-cinema\entrega-final\modulo-api
+plugins: anyio-4.16.0
+collecting ... collected 51 items
+
+tests/test_api.py::test_health PASSED                                    [  1%]
+tests/test_api.py::test_mapa_de_sillas PASSED                            [  3%]
+tests/test_api.py::test_sillas_funcion_inexistente PASSED                [  5%]
+tests/test_api.py::test_compra_feliz_y_silla_queda_ocupada PASSED        [  7%]
+tests/test_api.py::test_misma_silla_dos_veces_da_409 PASSED              [  9%]
+tests/test_api.py::test_idempotency_key_repetida_no_duplica PASSED       [ 11%]
+tests/test_api.py::test_validaciones_dan_422[cambio0] PASSED             [ 13%]
+tests/test_api.py::test_validaciones_dan_422[cambio1] PASSED             [ 15%]
+tests/test_api.py::test_validaciones_dan_422[cambio2] PASSED             [ 17%]
+tests/test_api.py::test_validaciones_dan_422[cambio3] PASSED             [ 19%]
+tests/test_api.py::test_validaciones_dan_422[cambio4] PASSED             [ 21%]
+tests/test_api.py::test_validaciones_dan_422[cambio5] PASSED             [ 23%]
+tests/test_api.py::test_validaciones_dan_422[cambio6] PASSED             [ 25%]
+tests/test_api.py::test_cuerpo_no_json PASSED                            [ 27%]
+tests/test_api.py::test_funcion_finalizada_da_409 PASSED                 [ 29%]
+tests/test_api.py::test_asiento_de_otra_sala_se_rechaza PASSED           [ 31%]
+tests/test_api.py::test_mongo_caido_revierte_la_venta PASSED             [ 33%]
+tests/test_api.py::test_anular_libera_silla_y_marca_comprobante PASSED   [ 35%]
+tests/test_api.py::test_anular_dos_veces_o_inexistente PASSED            [ 37%]
+tests/test_api.py::test_caso3_cruza_ventas_e_incidentes PASSED           [ 39%]
+tests/test_api.py::test_caso3_parametros_invalidos PASSED                [ 41%]
+tests/test_api.py::test_caso3_con_mongo_caido_devuelve_solo_ventas PASSED [ 43%]
+tests/test_api.py::test_anular_conserva_historial_de_boletas PASSED      [ 45%]
+tests/test_api.py::test_silla_bloqueada_no_se_vende_y_se_marca_en_el_mapa PASSED [ 47%]
+tests/test_casos_1_y_2.py::test_caso1_resumen_y_resenas PASSED           [ 49%]
+tests/test_casos_1_y_2.py::test_caso1_funcion_inexistente_404 PASSED     [ 50%]
+tests/test_casos_1_y_2.py::test_caso1_con_mongo_caido_devuelve_la_funcion PASSED [ 52%]
+tests/test_casos_1_y_2.py::test_caso2_requisitos_y_pendientes PASSED     [ 54%]
+tests/test_casos_1_y_2.py::test_caso2_pelicula_inexistente_404 PASSED    [ 56%]
+tests/test_casos_1_y_2.py::test_catalogo_de_peliculas_para_el_front PASSED [ 58%]
+tests/test_resenas_incidentes.py::test_resena_valida_se_guarda_con_pelicula_de_postgres PASSED [ 60%]
+tests/test_resenas_incidentes.py::test_resena_sin_compra_se_rechaza_409 PASSED [ 62%]
+tests/test_resenas_incidentes.py::test_resena_de_funcion_no_finalizada_409 PASSED [ 64%]
+tests/test_resenas_incidentes.py::test_resena_repetida_409 PASSED        [ 66%]
+tests/test_resenas_incidentes.py::test_indice_unico_de_mongo_se_traduce_a_409 PASSED [ 68%]
+tests/test_resenas_incidentes.py::test_error_121_de_mongo_se_traduce_a_422 PASSED [ 70%]
+tests/test_resenas_incidentes.py::test_resena_con_forma_invalida_422[cambio0] PASSED [ 72%]
+tests/test_resenas_incidentes.py::test_resena_con_forma_invalida_422[cambio1] PASSED [ 74%]
+tests/test_resenas_incidentes.py::test_resena_con_forma_invalida_422[cambio2] PASSED [ 76%]
+tests/test_resenas_incidentes.py::test_resena_con_forma_invalida_422[cambio3] PASSED [ 78%]
+tests/test_resenas_incidentes.py::test_resena_funcion_o_espectador_inexistente_404 PASSED [ 80%]
+tests/test_resenas_incidentes.py::test_resena_con_mongo_caido_503 PASSED [ 82%]
+tests/test_resenas_incidentes.py::test_incidente_valido_genera_codigo_y_cargo PASSED [ 84%]
+tests/test_resenas_incidentes.py::test_incidente_con_funcion_toma_sala_y_pelicula_de_postgres PASSED [ 86%]
+tests/test_resenas_incidentes.py::test_incidente_sala_incoherente_con_la_funcion_422 PASSED [ 88%]
+tests/test_resenas_incidentes.py::test_incidente_referencias_inexistentes_404 PASSED [ 90%]
+tests/test_resenas_incidentes.py::test_incidente_sin_el_detalle_de_su_tipo_422 PASSED [ 92%]
+tests/test_resenas_incidentes.py::test_incidente_con_detalle_de_otro_tipo_422 PASSED [ 94%]
+tests/test_resenas_incidentes.py::test_incidente_error_121_de_mongo_a_422 PASSED [ 96%]
+tests/test_resenas_incidentes.py::test_incidentes_de_una_sala_incluyen_el_recien_creado PASSED [ 98%]
+tests/test_resenas_incidentes.py::test_catalogos_para_el_front PASSED    [100%]
+
+============================== warnings summary ===============================
+..\..\..\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\Kayden\AppData\Local\Programs\Python\Python313\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 51 passed, 1 warning in 122.76s (0:02:02) ==================
