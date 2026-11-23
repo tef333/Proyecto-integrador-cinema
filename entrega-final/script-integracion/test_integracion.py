@@ -8,6 +8,8 @@ Ejecutar:  pip install pytest mongomock  &&  pytest -v test_integracion.py
 Cada prueba corre sobre la base y la deja como estaba (borra lo que crea).
 """
 import os
+import threading
+import uuid
 from unittest import mock
 
 import mongomock
@@ -39,7 +41,10 @@ def pg():
     except Exception:
         pass
     limpia = conectar_postgres()
+    migrada = hay_migracion(limpia)
     with limpia.cursor() as cur:
+        if migrada:                                    # las boletas primero (FK a ventas)
+            cur.execute("DELETE FROM boletas WHERE id_venta > %s", (base,))
         cur.execute("DELETE FROM ventas WHERE id_venta > %s", (base,))
         cur.execute("UPDATE espectadores SET puntos_acumulados = %s WHERE id_espectador = 1", (puntos,))
     limpia.commit()
@@ -57,6 +62,50 @@ def n_ventas(pg):
         n = cur.fetchone()[0]
     pg.rollback()
     return n
+
+
+def hay_migracion(conn):
+    with conn.cursor() as cur:
+        cur.execute("SELECT to_regclass('public.boletas') IS NOT NULL")
+        r = cur.fetchone()[0]
+    conn.rollback()
+    return r
+
+
+@pytest.fixture
+def migrada(pg):
+    """La conexion pg, solo si la base tiene la migracion final; si no, la prueba se salta."""
+    if not hay_migracion(pg):
+        pytest.skip("la base no tiene la migracion final (06_migracion_final.sql)")
+    return pg
+
+
+def sillas_libres(pg, id_funcion, n):
+    with pg.cursor() as cur:
+        cur.execute("""SELECT a.id_asiento FROM funciones f
+                       JOIN asientos a ON a.id_sala = f.id_sala
+                       WHERE f.id_funcion = %s AND a.estado = 'Activo'
+                         AND NOT EXISTS (SELECT 1 FROM boletas b
+                                         WHERE b.id_funcion = f.id_funcion
+                                           AND b.id_asiento = a.id_asiento AND b.estado = 'Valida')
+                       ORDER BY a.fila, a.numero LIMIT %s""", (id_funcion, n))
+        ids = [f[0] for f in cur.fetchall()]
+    pg.rollback()
+    assert len(ids) == n, "la funcion de prueba no tiene sillas libres suficientes"
+    return ids
+
+
+def boletas_de(pg, id_venta):
+    with pg.cursor() as cur:
+        cur.execute("SELECT id_asiento, estado FROM boletas WHERE id_venta = %s ORDER BY id_boleta",
+                    (id_venta,))
+        filas = cur.fetchall()
+    pg.rollback()
+    return filas
+
+
+def clave():
+    return f"test-{uuid.uuid4().hex}"
 
 
 def test_venta_exitosa_deja_ambos_motores_consistentes(pg, mongo):
@@ -158,3 +207,89 @@ def test_no_se_duplica_el_comprobante_de_una_venta(pg, mongo):
     mongo.comprobantes_venta.create_index("id_venta", unique=True)
     res = vi.registrar_venta_integrada(pg, mongo, VENTA)
     assert mongo.comprobantes_venta.count_documents({"id_venta": res["id_venta"]}) == 1
+
+
+# ------------------------------------------- migracion final (sillas y boletas) ---
+# Se saltan solas si la base no tiene 06_migracion_final.sql.
+
+def test_venta_con_ids_asiento_crea_boletas_y_comprobante(migrada, mongo):
+    sillas = sillas_libres(migrada, VENTA["id_funcion"], 2)
+    k = clave()
+    res = vi.registrar_venta_integrada(migrada, mongo, {**VENTA, "ids_asiento": sillas,
+                                                        "idempotency_key": k})
+    assert res["repetida"] is False and res["ids_asiento"] == sillas
+    assert boletas_de(migrada, res["id_venta"]) == [(s, "Valida") for s in sillas]
+    doc = mongo.comprobantes_venta.find_one({"id_venta": res["id_venta"]})
+    assert doc["ids_asiento"] == sillas and doc["idempotency_key"] == k
+
+
+def test_silla_ocupada_es_409_y_no_deja_comprobante(migrada, mongo):
+    silla = sillas_libres(migrada, VENTA["id_funcion"], 1)
+    una = {**VENTA, "cantidad": 1, "ids_asiento": silla}
+    vi.registrar_venta_integrada(migrada, mongo, una)
+    antes = n_ventas(migrada)
+    with pytest.raises(vi.ErrorNegocio) as e:
+        vi.registrar_venta_integrada(migrada, mongo, una)         # la misma silla otra vez
+    assert e.value.codigo == "silla_ocupada" and e.value.estado_http == 409
+    assert n_ventas(migrada) == antes
+    assert mongo.comprobantes_venta.count_documents({}) == 1    # solo el de la primera venta
+
+
+def test_misma_idempotency_key_crea_una_sola_venta(migrada, mongo):
+    datos = {**VENTA, "cantidad": 1, "ids_asiento": sillas_libres(migrada, VENTA["id_funcion"], 1),
+             "idempotency_key": clave()}
+    antes = n_ventas(migrada)
+    primera = vi.registrar_venta_integrada(migrada, mongo, datos)
+    segunda = vi.registrar_venta_integrada(migrada, mongo, datos)   # reintento
+    assert primera["repetida"] is False and segunda["repetida"] is True
+    assert segunda["id_venta"] == primera["id_venta"]
+    assert segunda["comprobante_id"] == primera["comprobante_id"]
+    assert segunda["ids_asiento"] == primera["ids_asiento"]
+    assert segunda["total"] == primera["total"]
+    assert n_ventas(migrada) == antes + 1
+    assert mongo.comprobantes_venta.count_documents({}) == 1
+    assert len(boletas_de(migrada, primera["id_venta"])) == 1
+
+
+def test_misma_idempotency_key_en_dos_hilos_crea_una_sola_venta(migrada, mongo):
+    datos = {**VENTA, "cantidad": 1, "ids_asiento": sillas_libres(migrada, VENTA["id_funcion"], 1),
+             "idempotency_key": clave()}
+    antes = n_ventas(migrada)
+    salida = threading.Barrier(2)
+    resultados, errores = [], []
+
+    def comprar():
+        conn = conectar_postgres()
+        try:
+            salida.wait()                                    # arrancan a la vez
+            resultados.append(vi.registrar_venta_integrada(conn, mongo, datos))
+        except Exception as e:                               # noqa: BLE001 (se revisa abajo)
+            errores.append(e)
+        finally:
+            conn.close()
+
+    hilos = [threading.Thread(target=comprar) for _ in range(2)]
+    for h in hilos:
+        h.start()
+    for h in hilos:
+        h.join(timeout=60)
+    assert not errores, errores
+    assert sorted(r["repetida"] for r in resultados) == [False, True]
+    assert resultados[0]["id_venta"] == resultados[1]["id_venta"]
+    assert n_ventas(migrada) == antes + 1
+    assert mongo.comprobantes_venta.count_documents({}) == 1
+
+
+def test_sin_ids_asiento_asigna_sillas_libres(migrada, mongo):
+    res = vi.registrar_venta_integrada(migrada, mongo, VENTA)          # cantidad 2, sin sillas
+    boletas = boletas_de(migrada, res["id_venta"])
+    assert len(boletas) == 2 and all(estado == "Valida" for _, estado in boletas)
+    assert [b[0] for b in boletas] == res["ids_asiento"]
+    with migrada.cursor() as cur:                                       # de la sala de la funcion
+        cur.execute("""SELECT count(*) FROM asientos a JOIN funciones f ON f.id_sala = a.id_sala
+                       WHERE f.id_funcion = %s AND a.id_asiento = ANY(%s)""",
+                    (VENTA["id_funcion"], res["ids_asiento"]))
+        assert cur.fetchone()[0] == 2
+    migrada.rollback()
+    doc = mongo.comprobantes_venta.find_one({"id_venta": res["id_venta"]})
+    assert doc["ids_asiento"] == res["ids_asiento"]

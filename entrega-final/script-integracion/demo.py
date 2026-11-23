@@ -35,8 +35,11 @@ def correr(titulo, pg, mongo, datos, simular_fallo_mongo=False):
     print("antes  :", antes)
     try:
         if simular_fallo_mongo:
-            with mock.patch("pymongo.collection.Collection.insert_one",
-                            side_effect=AutoReconnect("Atlas no responde (simulado)")):
+            # Se parchea la clase real de la coleccion: pymongo con Atlas o
+            # mongomock con MONGO_URI=mock.
+            clase = type(mongo.comprobantes_venta)
+            with mock.patch.object(clase, "insert_one",
+                                   side_effect=AutoReconnect("Atlas no responde (simulado)")):
                 res = registrar_venta_integrada(pg, mongo, datos)
         else:
             res = registrar_venta_integrada(pg, mongo, datos)
