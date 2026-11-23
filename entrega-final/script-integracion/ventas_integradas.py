@@ -22,6 +22,14 @@ Asi PostgreSQL (la fuente de verdad del dinero) nunca queda con una venta sin
 comprobante, y el unico dato que puede quedar huerfano es un comprobante de
 Mongo, que se detecta por su id_venta y se corrige con la compensacion.
 
+Migracion final (06_migracion_final.sql)
+----------------------------------------
+Si la base tiene la tabla boletas, en el paso 1 tambien se guarda la
+idempotency_key en la venta y se inserta una boleta por silla (las sillas de
+ids_asiento o, si no vienen, sillas libres asignadas automaticamente). Un
+trigger diferido exige al COMMIT exactamente 'cantidad' boletas validas.
+Sin la migracion, la venta se registra como antes (sin sillas).
+
 Los errores se devuelven como excepciones con un 'codigo' y un 'estado_http'
 sugerido, para que la API (FastAPI) los traduzca sin repetir logica.
 """
@@ -62,6 +70,16 @@ class ErrorNegocio(ErrorIntegracion):
     codigo, estado_http = "regla_de_negocio", 409
 
 
+class ErrorSillaOcupada(ErrorNegocio):
+    """Alguna silla ya tiene una boleta valida para esa funcion."""
+    codigo = "silla_ocupada"
+
+
+class ErrorClaveRepetida(ErrorNegocio):
+    """La idempotency_key ya se uso en otra venta."""
+    codigo = "clave_repetida"
+
+
 class ErrorNoEncontrado(ErrorIntegracion):
     """La funcion, el espectador o el taquillero no existe."""
     codigo, estado_http = "no_encontrado", 404
@@ -83,9 +101,33 @@ CANALES = ("Taquilla", "Online")
 METODOS = ("Efectivo", "Tarjeta", "Transferencia")
 
 
+def _validar_ids_asiento(ids) -> list[int] | None:
+    if ids is None:
+        return None
+    if not isinstance(ids, list) or not 1 <= len(ids) <= 10:
+        raise ErrorValidacion("ids_asiento debe ser una lista de 1 a 10 sillas", {"campo": "ids_asiento"})
+    if any(isinstance(i, bool) or not isinstance(i, int) or i < 1 for i in ids):
+        raise ErrorValidacion("ids_asiento debe contener enteros positivos", {"campo": "ids_asiento"})
+    if len(set(ids)) != len(ids):
+        raise ErrorValidacion("ids_asiento no puede repetir sillas", {"campo": "ids_asiento"})
+    return list(ids)
+
+
+def _validar_idempotency_key(clave) -> str | None:
+    if clave is None:
+        return None
+    if not isinstance(clave, str) or not 8 <= len(clave) <= 64:
+        raise ErrorValidacion("idempotency_key debe ser un texto de 8 a 64 caracteres",
+                              {"campo": "idempotency_key"})
+    return clave
+
+
 def validar_entrada(datos: dict) -> dict:
     if not isinstance(datos, dict):
         raise ErrorValidacion("El cuerpo de la peticion debe ser un objeto JSON")
+    ids_asiento = _validar_ids_asiento(datos.get("ids_asiento"))
+    if ids_asiento is not None and "cantidad" not in datos:
+        datos = {**datos, "cantidad": len(ids_asiento)}       # una boleta por silla
     faltan = [c for c in (*CAMPOS_ENTERO, "canal_venta", "metodo_pago") if c not in datos]
     if faltan:
         raise ErrorValidacion("Faltan campos obligatorios", {"campos": faltan})
@@ -97,6 +139,11 @@ def validar_entrada(datos: dict) -> dict:
         limpio[c] = v
     if not 1 <= limpio["cantidad"] <= 10:
         raise ErrorValidacion("cantidad debe estar entre 1 y 10", {"campo": "cantidad"})
+    if ids_asiento is not None and limpio["cantidad"] != len(ids_asiento):
+        raise ErrorValidacion("cantidad debe ser igual al numero de sillas en ids_asiento",
+                              {"campo": "cantidad"})
+    limpio["ids_asiento"] = ids_asiento
+    limpio["idempotency_key"] = _validar_idempotency_key(datos.get("idempotency_key"))
     if datos["canal_venta"] not in CANALES:
         raise ErrorValidacion(f"canal_venta debe ser uno de {CANALES}", {"campo": "canal_venta"})
     if datos["metodo_pago"] not in METODOS:
@@ -123,7 +170,62 @@ SELECT %(id_funcion)s, %(id_espectador)s, tb.id_tipo_boleta, %(id_staff)s,
        %(cantidad)s, tb.precio, %(canal_venta)s, %(metodo_pago)s
 FROM tipos_boleta tb
 WHERE tb.id_tipo_boleta = %(id_tipo_boleta)s
-RETURNING id_venta, precio_unitario, fecha_venta
+RETURNING id_venta, precio_unitario, fecha_venta, estado
+"""
+
+# Con la migracion final: la venta guarda la idempotency_key (UNIQUE; NULL si no vino).
+SQL_INSERTAR_VENTA_MIGRADA = """
+INSERT INTO ventas (id_funcion, id_espectador, id_tipo_boleta, id_staff,
+                    cantidad, precio_unitario, canal_venta, metodo_pago, idempotency_key)
+SELECT %(id_funcion)s, %(id_espectador)s, tb.id_tipo_boleta, %(id_staff)s,
+       %(cantidad)s, tb.precio, %(canal_venta)s, %(metodo_pago)s, %(idempotency_key)s
+FROM tipos_boleta tb
+WHERE tb.id_tipo_boleta = %(id_tipo_boleta)s
+RETURNING id_venta, precio_unitario, fecha_venta, estado
+"""
+
+# Venta ya registrada con esa idempotency_key (para devolverla en vez de duplicarla).
+SQL_VENTA_POR_CLAVE = """
+SELECT v.id_venta, v.estado, v.cantidad, v.precio_unitario,
+       p.titulo, s.nombre AS nombre_sala, e.puntos_acumulados,
+       (SELECT array_agg(b.id_asiento ORDER BY b.id_boleta)
+        FROM boletas b WHERE b.id_venta = v.id_venta) AS ids_asiento
+FROM ventas v
+JOIN funciones f    ON f.id_funcion = v.id_funcion
+JOIN peliculas p    ON p.id_pelicula = f.id_pelicula
+JOIN salas s        ON s.id_sala = f.id_sala
+JOIN espectadores e ON e.id_espectador = v.id_espectador
+WHERE v.idempotency_key = %s
+"""
+
+MENSAJE_REPETIDA = "Esta idempotency_key ya genero la venta; no se duplico."
+
+SQL_HAY_MIGRACION = "SELECT to_regclass('public.boletas') IS NOT NULL AS migrada"
+
+# Sillas libres de la sala de la funcion: activas y sin boleta valida para esa funcion.
+# Primero las del tipo que pide la boleta (VIP para el tipo 'VIP', Estandar para los
+# demas); en la sala VIP todas son VIP. SKIP LOCKED: dos compras simultaneas no
+# eligen la misma silla.
+SQL_SILLAS_LIBRES = """
+SELECT a.id_asiento
+FROM funciones f
+JOIN asientos a ON a.id_sala = f.id_sala
+WHERE f.id_funcion = %(id_funcion)s
+  AND a.estado = 'Activo'
+  AND NOT EXISTS (SELECT 1 FROM boletas b
+                  WHERE b.id_funcion = f.id_funcion
+                    AND b.id_asiento = a.id_asiento
+                    AND b.estado = 'Valida')
+ORDER BY (a.tipo <> (SELECT CASE WHEN tb.nombre = 'VIP' THEN 'VIP' ELSE 'Estandar' END
+                     FROM tipos_boleta tb WHERE tb.id_tipo_boleta = %(id_tipo_boleta)s)),
+         a.fila, a.numero
+LIMIT %(cantidad)s
+FOR UPDATE OF a SKIP LOCKED
+"""
+
+SQL_INSERTAR_BOLETAS = """
+INSERT INTO boletas (id_venta, id_funcion, id_asiento)
+SELECT %s, %s, unnest(%s::int[])
 """
 
 SQL_CONTEXTO = """
@@ -157,7 +259,9 @@ def registrar_venta_integrada(pg_conn: psycopg.Connection, mongo_db, datos: dict
     try:
         with pg_conn.transaction():                       # paso 1 y 3 (commit al salir)
             with pg_conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
-                cur.execute(SQL_INSERTAR_VENTA, d)
+                cur.execute(SQL_HAY_MIGRACION)
+                migrada = cur.fetchone()["migrada"]
+                cur.execute(SQL_INSERTAR_VENTA_MIGRADA if migrada else SQL_INSERTAR_VENTA, d)
                 venta = cur.fetchone()
                 if venta is None:
                     raise ErrorNoEncontrado(
@@ -167,6 +271,17 @@ def registrar_venta_integrada(pg_conn: psycopg.Connection, mongo_db, datos: dict
                 ctx = cur.fetchone()
                 if ctx is None:   # no deberia pasar: los FK ya lo habrian rechazado
                     raise ErrorNoEncontrado("No se encontro la funcion o el espectador")
+                ids_asiento = d["ids_asiento"]
+                if migrada:       # boletas en la misma transaccion, antes de tocar Mongo
+                    if ids_asiento is None:
+                        cur.execute(SQL_SILLAS_LIBRES, d)
+                        ids_asiento = [fila["id_asiento"] for fila in cur.fetchall()]
+                        if len(ids_asiento) < d["cantidad"]:
+                            raise ErrorNegocio(
+                                f"No hay {d['cantidad']} sillas libres para la funcion {d['id_funcion']}",
+                                {"sillas_libres": len(ids_asiento)})
+                    cur.execute(SQL_INSERTAR_BOLETAS,
+                                (venta["id_venta"], d["id_funcion"], ids_asiento))
 
             total = venta["precio_unitario"] * d["cantidad"]
             documento = {
@@ -191,7 +306,11 @@ def registrar_venta_integrada(pg_conn: psycopg.Connection, mongo_db, datos: dict
                 "creado_en": datetime.now(timezone.utc),
                 "origen": "integracion-python",
             }
-            try:                                          # paso 2: Mongo, con PG aun sin commit
+            if ids_asiento is not None:
+                documento["ids_asiento"] = ids_asiento
+            if d["idempotency_key"] is not None:
+                documento["idempotency_key"] = d["idempotency_key"]
+            try:                                        # paso 2: Mongo, con PG aun sin commit
                 mongo_intentado = True
                 coleccion_confirmada(mongo_db, COLECCION).insert_one(documento)
             except PyMongoError as e:
@@ -201,12 +320,15 @@ def registrar_venta_integrada(pg_conn: psycopg.Connection, mongo_db, datos: dict
                     {"causa": type(e).__name__}) from e
 
             resultado = {
+                "repetida": False,
                 "id_venta": venta["id_venta"],
+                "estado": venta["estado"],
                 "total": total,
                 "puntos_acumulados": ctx["puntos_acumulados"],
                 "comprobante_id": str(comprobante_id),
                 "titulo_pelicula": ctx["titulo"],
                 "nombre_sala": ctx["nombre_sala"],
+                "ids_asiento": ids_asiento,
             }
         # aqui PostgreSQL ya hizo COMMIT (paso 3)
     except ErrorIntegracion:
@@ -223,11 +345,59 @@ def registrar_venta_integrada(pg_conn: psycopg.Connection, mongo_db, datos: dict
         _compensar_si_hace_falta(mongo_db, comprobante_id, mongo_intentado)
         raise ErrorValidacion("PostgreSQL rechazo los datos",
                               {"detalle_bd": e.diag.message_primary}) from e
-    except psycopg.Error as e:                      # incluye fallo en el COMMIT
+    except pgerr.UniqueViolation as e:
+        # Ocurre en los INSERT del paso 1 (antes de Mongo); la transaccion ya se revirtio.
+        _compensar_si_hace_falta(mongo_db, comprobante_id, mongo_intentado)
+        restriccion = e.diag.constraint_name or ""
+        if "idempot" in restriccion and d["idempotency_key"] is not None:
+            # Misma clave (reintento o peticion simultanea): se devuelve la venta original.
+            previa = _venta_por_clave(pg_conn, mongo_db, d["idempotency_key"])
+            if previa is not None:
+                return previa
+            raise ErrorClaveRepetida("Esa idempotency_key ya fue usada en otra venta",
+                                     {"restriccion": restriccion}) from e
+        raise ErrorSillaOcupada("Una de las sillas ya fue vendida para esta funcion",
+                                {"restriccion": restriccion,
+                                 "ids_asiento": d["ids_asiento"]}) from e
+    except psycopg.Error as e:                     # incluye fallo en el COMMIT
         _compensar_si_hace_falta(mongo_db, comprobante_id, mongo_intentado)
         raise ErrorPostgres("Error inesperado en PostgreSQL; la operacion fue revertida",
                             {"causa": type(e).__name__}) from e
     return resultado
+
+
+def _venta_por_clave(pg_conn: psycopg.Connection, mongo_db, clave: str) -> dict | None:
+    """Venta ya registrada con esa idempotency_key, en el mismo formato que una venta
+    nueva mas 'repetida': True (como responde la API a una clave existente). Solo lee:
+    no escribe nada en PostgreSQL ni en MongoDB."""
+    try:
+        pg_conn.rollback()
+        with pg_conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+            cur.execute(SQL_VENTA_POR_CLAVE, (clave,))
+            v = cur.fetchone()
+        pg_conn.rollback()
+    except psycopg.Error as e:
+        raise ErrorPostgres("Error inesperado en PostgreSQL al buscar la venta original",
+                            {"causa": type(e).__name__}) from e
+    if v is None:
+        return None
+    try:
+        doc = mongo_db[COLECCION].find_one({"id_venta": v["id_venta"]}, {"_id": 1})
+        comprobante_id = str(doc["_id"]) if doc else None
+    except PyMongoError:
+        comprobante_id = None        # lectura opcional: la venta ya existe en PostgreSQL
+    return {
+        "repetida": True,
+        "id_venta": v["id_venta"],
+        "estado": v["estado"],
+        "mensaje": MENSAJE_REPETIDA,
+        "total": v["precio_unitario"] * v["cantidad"],
+        "puntos_acumulados": v["puntos_acumulados"],
+        "comprobante_id": comprobante_id,
+        "titulo_pelicula": v["titulo"],
+        "nombre_sala": v["nombre_sala"],
+        "ids_asiento": v["ids_asiento"],
+    }
 
 
 def _compensar_si_hace_falta(mongo_db, comprobante_id, mongo_intentado: bool) -> None:

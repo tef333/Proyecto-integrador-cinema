@@ -40,6 +40,12 @@ ESQUEMA = {
             "fecha_venta": {"bsonType": "date"},
             "creado_en": {"bsonType": "date"},
             "origen": {"bsonType": "string"},
+            # Opcionales (migracion final): no estan en 'required', asi que los
+            # comprobantes anteriores siguen siendo validos.
+            "ids_asiento": {"bsonType": "array", "minItems": 1, "maxItems": 10,
+                            "items": {"bsonType": ["int", "long"], "minimum": 1},
+                            "description": "sillas de las boletas de la venta"},
+            "idempotency_key": {"bsonType": "string", "minLength": 8, "maxLength": 64},
         },
     }
 }

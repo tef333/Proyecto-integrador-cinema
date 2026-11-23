@@ -13,7 +13,7 @@ en PostgreSQL y, en la misma operación, su **comprobante** en MongoDB
 | `compensacion.py` | Deshace en MongoDB si algo falla (**pendiente de extender: Estefanía**) |
 | `preparar_mongo.py` | Crea `comprobantes_venta` con `$jsonSchema` e índice único por `id_venta` |
 | `demo.py` | Corre 3 escenarios contra los motores reales (éxito, rechazo, fallo de Mongo) |
-| `test_integracion.py` | 15 pruebas automáticas |
+| `test_integracion.py` | 20 pruebas automáticas (5 requieren la migración final) |
 | `funcion_para_demo.sql` | Crea una función futura si las de los datos de prueba ya pasaron |
 
 ## Instalación y configuración
@@ -81,6 +81,22 @@ Campos del cuerpo: `id_funcion`, `id_espectador`, `id_tipo_boleta`, `cantidad` (
 `canal_venta` (`Taquilla`/`Online`), `metodo_pago`, `id_staff` (obligatorio en
 Taquilla, `null` en Online). El precio se toma del catálogo, no del cliente.
 
+También se pueden enviar dos campos opcionales. El primero es ids_asiento, una lista
+de 1 a 10 sillas sin repetir; si viene, la cantidad debe ser igual al número de sillas
+y se puede omitir. El segundo es idempotency_key, un texto de 8 a 64 caracteres.
+
+Con la migración final, el módulo la detecta en cada venta. Dentro de la misma
+transacción y antes de escribir en Mongo, guarda la idempotency_key en la venta e
+inserta una boleta por cada silla. Si no se enviaron sillas, asigna sillas libres de
+la sala: VIP para el tipo de boleta VIP y Estándar para los demás. Si no alcanzan, la
+venta se rechaza con error 409.
+
+Si una silla ya fue vendida para esa función, la venta se rechaza con error 409
+silla_ocupada y no queda comprobante en Mongo. Si la idempotency_key ya se usó, por un
+reintento o por dos peticiones al mismo tiempo, se devuelve la venta original marcada
+como repetida y no se escribe nada en Mongo. El comprobante guarda las sillas y la
+idempotency_key cuando existen. Sin la migración todo funciona como antes.
+
 ## Pruebas
 
 ```bash
@@ -93,6 +109,10 @@ PG_DSN="..." pytest -v
 > sin `-pooler` en el host. Con la cadena del pooler, la prueba
 > `test_fallo_en_commit_compensa_el_comprobante_de_mongo` se salta (el pooler
 > oculta la caída de la conexión) y el resultado es 14 aprobadas y 1 saltada.
+
+En total son 20 pruebas. Cinco de ellas requieren la migración final y se saltan solas
+si la base no la tiene, así que sin la migración el resultado es 15 aprobadas y 5
+saltadas, y con la migración son 20 aprobadas.
 
 PostgreSQL es real; MongoDB se simula con `mongomock` para poder probar caídas.
 Cada prueba deja la base como estaba. Cubren: venta exitosa y consistencia entre
