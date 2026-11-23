@@ -10,10 +10,10 @@ El proyecto combina un núcleo transaccional en PostgreSQL (Avance 1), una capa 
 
 | # | Integrante | Usuario GitHub | Avance 1 | Avance 2 | Entrega final |
 |---|---|---|---|---|---|
-| 1 | Estefania Paredes | tef333 | Modelo ER, modelo relacional y creación de tablas | Colección `reportes_incidentes`, diagrama de arquitectura políglota y sección CAP | API y front de ventas y sillas (comprar, anular, mapa de sillas), caso 3, prueba de concurrencia y sección de casos de uso y concurrencia del informe |
-| 2 | Jose Espin | jespinn | Triggers | Colección `requisitos_proyeccion` y sección ACID | Módulo de integración (conexión a ambos motores y transacción cruzada) |
-| 3 | Santiago Rojas | Srojas-ga y Shellingbump85 | Procedimientos almacenados | Colección `fichas_tecnicas_peliculas` y sección BASE | Casos de uso con reseñas, requisitos e incidentes |
-| 4 | Erika Gomez | Eri-02 | Consultas SQL e informe PDF | Colección `resenas_peliculas`, integración e informe del Avance 2 | PostgreSQL y migración, informe final consolidado |
+| 1 | Estefania Paredes | tef333 | Modelo ER, modelo relacional y creación de tablas | Colección `reportes_incidentes`, diagrama de arquitectura políglota y sección CAP | Ventas y sillas en API y front (sillas, comprar, anular y mapa de sillas, con errores HTTP 409 y 422), consulta SQL y caso 3 (ventas con incidentes por sala), prueba de concurrencia sobre la misma silla y sección de casos de uso y concurrencia del informe |
+| 2 | Jose Espin | jespinn | Triggers | Colección `requisitos_proyeccion` y sección ACID | Conexión entre motores: saga de venta, validación cruzada, cancelación propagada, `/auditoria/consistencia`, pools, `/health`, `request_id` y `.env`; escribe los eventos en MongoDB desde la saga; prueba de MongoDB caído durante una venta y sección de arquitectura de integración, flujo de datos y conexión |
+| 3 | Santiago Rojas | Srojas-ga y Shellingbump85 | Procedimientos almacenados | Colección `fichas_tecnicas_peliculas` y sección BASE | Reseñas, requisitos e incidentes en API y front; consultas de los casos 1 y 2 (función con reseñas y película con requisitos); endpoints de reseñas e incidentes (error 121 → 422, duplicado → 409); panel de consistencia; prueba de reseña sin compra y sección de sus casos de uso con capturas |
+| 4 | Erika Gomez | Eri-02 | Consultas SQL e informe PDF | Colección `resenas_peliculas`, integración e informe del Avance 2 | PostgreSQL y MongoDB: sillas, boletas, trigger de cupo, estados, `idempotency_key`, migración y pruebas SQL; eventos con TTL, índice único de reseñas y schema estricto; endpoint y front de cartelera; informe final consolidado (portada, avances, conclusiones, ensamblaje, README y GitHub) |
 
 ## Estructura del repositorio
 
@@ -22,7 +22,7 @@ avance1-postgresql/
 ├── avance1-informe.pdf
 ├── modelo-er/                  Modelo Entidad Cinema.drawio.pdf
 ├── modelo-relacional/          modelo relacional corregido feedback.pdf
-├── scripts/                    01_creacion_tablas.sql … 06 (sillas, boletas e idempotencia)
+├── scripts/                    01_creacion_tablas.sql … 06 (sillas, boletas, cupo, estados e idempotencia)
 └── evidencias/                 capturas de ejecución
 avance2-mongodb/
 ├── diagrama-arquitectura-poliglota/   diagrama-arquitectura-poliglota.pdf
@@ -55,7 +55,7 @@ Contenido de `scripts/`:
 | `03_triggers.sql` | 8 triggers sobre 6 tablas, más la función `pruebas_triggers()` |
 | `04_procedimientos.sql` | `sp_cancelar_funcion`, `sp_reporte_ventas` y `sp_mantenimiento_diario` |
 | `05_consultas.sql` | 3 consultas con JOIN, agregaciones y subconsultas |
-| `06` (agregado en la Entrega final) | Sillas, boletas y clave de idempotencia de las ventas |
+| `06` (agregado en la Entrega final) | Sillas, boletas, trigger de cupo, estados y clave de idempotencia (`idempotency_key`) de las ventas, con su migración y pruebas SQL |
 
 Cómo ejecutar: correr los scripts de `scripts/` en orden, del 01 al 06, sobre una base de datos vacía. Para repetir la carga se vuelve a correr desde el 01, que borra y recrea las tablas; no se corre solo el 02 con los triggers ya creados.
 
@@ -123,13 +123,14 @@ Conecta PostgreSQL (Neon) con MongoDB (Atlas) mediante un módulo en Python y un
 
 ### Transacción cruzada
 
-La venta y sus boletas se guardan en PostgreSQL sin confirmar, después se guarda el comprobante en MongoDB y al final se confirma.
+La venta y sus boletas se guardan en PostgreSQL sin confirmar, después se guarda el comprobante en MongoDB y al final se confirma. Este flujo es la saga de venta.
 
 | Situación | Resultado |
 |---|---|
 | Falla MongoDB al guardar el comprobante | La venta se revierte en PostgreSQL |
 | Falla la confirmación en PostgreSQL | Se borra el comprobante de MongoDB |
 | Llega la misma `idempotency_key` otra vez | Se devuelve la venta original sin duplicarla |
+| Se anula una venta | La cancelación se propaga a ambos motores |
 
 ### API y front
 
@@ -137,9 +138,27 @@ La venta y sus boletas se guardan en PostgreSQL sin confirmar, después se guard
 |---|---|
 | Front | `http://localhost:8000/` |
 | Documentación | `http://localhost:8000/docs` |
+| Estado del servicio | `GET /health` |
+| Auditoría de consistencia entre motores | `GET /auditoria/consistencia` |
 | Caso 3: ventas con incidentes por sala | `GET /casos/3/ventas-con-incidentes` |
 
-La API responde los errores con los códigos 404, 409, 422 y 503.
+Códigos de error de la API:
+
+| Código | Cuándo se responde |
+|---|---|
+| 409 | Conflicto, por ejemplo una silla ya ocupada o una reseña duplicada |
+| 422 | Datos que no pasan la validación, por ejemplo el error 121 de MongoDB |
+| 404 y 503 | Recurso no encontrado y servicio no disponible |
+
+Pantallas del front:
+
+| Pantalla | Contenido |
+|---|---|
+| Cartelera | Películas en cartelera |
+| Mapa de sillas y compra | Selección de sillas, compra y anulación |
+| Resultados de compra | Resultado de cada compra y sus errores |
+| Reseñas, requisitos e incidentes | Consulta de reseñas, requisitos e incidentes por sala |
+| Panel de consistencia | Estado de la consistencia entre los dos motores |
 
 ### Cómo ejecutar
 
@@ -159,7 +178,7 @@ En Windows se usa `py` en lugar de `python` si el comando no se reconoce.
 
 Dependencias entre fases:
 
-- La Entrega final necesita las tablas de PostgreSQL con el script 06 (sillas, boletas e idempotencia) ya aplicado.
+- La Entrega final necesita las tablas de PostgreSQL con el script 06 (sillas, boletas, cupo, estados e idempotencia) ya aplicado.
 - El caso 3 necesita que `reportes_incidentes` esté cargada en MongoDB.
 - Si se vuelve a correr el Avance 1 desde el 01, hay que volver a aplicar el 06 y repetir las cargas que dependan de esas tablas.
 
