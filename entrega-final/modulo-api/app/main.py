@@ -12,7 +12,8 @@ from fastapi.staticfiles import StaticFiles
 
 from . import config  # noqa: F401
 from .errores import registrar_manejadores
-from .rutas import cartelera, casos, casos_integracion, catalogo, incidentes, resenas, ventas, sillas
+from .rutas import (auditoria, cartelera, casos, casos_integracion, catalogo, incidentes, resenas,
+                    ventas, sillas)
 from .dependencias import _mongo
 from db import conectar_postgres
 
@@ -48,7 +49,7 @@ def health():
 
 
 for r in (cartelera.router, catalogo.router, sillas.router, ventas.router, casos.router,
-          casos_integracion.router, resenas.router, incidentes.router):
+          casos_integracion.router, resenas.router, incidentes.router, auditoria.router):
     app.include_router(r)
 
 _estaticos = Path(__file__).resolve().parents[1] / "static"
