@@ -51,6 +51,7 @@
 <header><h1>Altamira Cine <small>boletería, reseñas e incidentes</small></h1><span id="estado" style="color:var(--mut);font-size:13px"></span></header>
 <nav id="tabs">
   <button data-v="v-compra" class="on">Compra</button>
+  <button data-v="v-cart">Cartelera</button>
   <button data-v="v-resenas">Reseñas</button>
   <button data-v="v-req">Requisitos técnicos</button>
   <button data-v="v-inc">Incidentes por sala</button>
@@ -83,6 +84,22 @@
       <div id="resAnular" class="msg"></div>
     </section>
   </div>
+</main>
+
+<main id="v-cart" class="vista">
+  <section style="grid-column:1/-1">
+    <h2>Cartelera</h2>
+    <div class="fila2" style="grid-template-columns:1fr 1fr auto auto;align-items:end">
+      <div><label>Fecha</label><input id="cFecha" type="date"></div>
+      <div><label>Película</label><select id="cPel"><option value="">Todas</option></select></div>
+      <button id="cBuscar" style="width:auto;margin:0;padding:9px 18px">Buscar</button>
+      <button id="cQuitar" class="sec" style="width:auto;margin:0;padding:9px 18px">Quitar filtros</button>
+    </div>
+    <div id="cMsg" class="msg"></div>
+    <div style="overflow-x:auto;margin-top:12px"><table id="cTabla" style="width:100%;border-collapse:collapse;font-size:14px;display:none">
+      <thead><tr style="text-align:left;color:var(--mut)"><th style="padding:8px">Hora</th><th>Película</th><th>Sala</th><th>Idioma</th><th>Sillas libres</th></tr></thead>
+      <tbody id="cCuerpo"></tbody></table></div>
+  </section>
 </main>
 
 <main id="v-resenas" class="vista">
@@ -271,9 +288,34 @@ document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click
   if (!cargadas[b.dataset.v] && iniciar[b.dataset.v]) { cargadas[b.dataset.v] = true; iniciar[b.dataset.v](); }
 }));
 function aviso(el, texto) { el.style.display = texto ? 'block' : 'none'; el.textContent = texto || ''; }
-const iniciar = { 'v-resenas': iniResenas, 'v-req': iniReq, 'v-inc': iniInc, 'v-cons': () => {} };
+const iniciar = { 'v-cart': iniCartelera, 'v-resenas': iniResenas, 'v-req': iniReq, 'v-inc': iniInc, 'v-cons': () => {} };
 const post = (ruta, cuerpo) => api(ruta, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) });
 const estrellas = n => n == null ? '-' : '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n));
+
+// ---------- Cartelera ----------
+async function iniCartelera() {
+  const p = await api('/peliculas');
+  if (p.ok) $('cPel').innerHTML = '<option value="">Todas</option>' + p.cuerpo.map(x => `<option value="${x.id_pelicula}">${esc(x.titulo)}</option>`).join('');
+  buscarCartelera();
+}
+async function buscarCartelera() {
+  const q = new URLSearchParams(); if ($('cFecha').value) q.set('fecha', $('cFecha').value); if ($('cPel').value) q.set('id_pelicula', $('cPel').value);
+  $('cTabla').style.display = 'none';
+  const r = await api('/cartelera' + (q.toString() ? '?' + q : ''));
+  if (r.estado === 0) return mostrar($('cMsg'), false, 'No se pudo contactar con la API. Revise que el servidor esté encendido e intente de nuevo.');
+  if (r.estado === 503) return mostrar($('cMsg'), false, 'La base de datos no está disponible en este momento. Intente de nuevo en unos minutos.');
+  if (!r.ok) return mostrar($('cMsg'), false, textoError(r));
+  if (!r.cuerpo.length) return mostrar($('cMsg'), false, 'No hay funciones con esos filtros. Pruebe con otra fecha o película, o quite los filtros.');
+  $('cMsg').className = 'msg';
+  $('cCuerpo').innerHTML = r.cuerpo.map(f => `<tr style="border-top:1px solid #342d27">
+    <td style="padding:9px 8px;white-space:nowrap">${fmtF(f.fecha_hora_inicio)}</td>
+    <td><b>${esc(f.titulo)}</b><br><small class="mut">${esc(f.genero)} · ${esc(f.clasificacion)} · ${esc(f.duracion_min)} min</small></td>
+    <td>${esc(f.sala)} <small class="mut">(${esc(f.tipo_sala)})</small></td><td>${esc(f.idioma)}</td>
+    <td>${f.sillas_disponibles > 0 ? `${f.sillas_disponibles} <small class="mut">de ${f.capacidad}</small>` : '<span class="tag bad">Agotada</span>'}</td></tr>`).join('');
+  $('cTabla').style.display = 'table';
+}
+$('cBuscar').addEventListener('click', buscarCartelera);
+$('cQuitar').addEventListener('click', () => { $('cFecha').value = ''; $('cPel').value = ''; buscarCartelera(); });
 
 // ---------- Reseñas + caso 1 ----------
 async function iniResenas() {
